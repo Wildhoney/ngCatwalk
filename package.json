@@ -1,0 +1,30 @@
+{
+  "name": "ng-catwalk",
+  "version": "0.1.0",
+  "description": "Catwalk.js Angularised.",
+  "main": "module/ngCatwalk.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wildhoney/ngCatwalk"
+  },
+  "keywords": [
+    "catwalk",
+    "models",
+    "crud",
+    "create",
+    "remove",
+    "update",
+    "delete",
+    "angular",
+    "ng"
+  ],
+  "author": "Adam Timberlake <adam.timberlake@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Wildhoney/ngCatwalk/issues"
+  },
+  "homepage": "https://github.com/Wildhoney/ngCatwalk"
+}
