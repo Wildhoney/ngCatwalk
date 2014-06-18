@@ -28,6 +28,6 @@
     "tests"
   ],
   "dependencies": {
-    "Catwalk.js": "~0.3.12"
+    "catwalk": "~0.3.12"
   }
 }
