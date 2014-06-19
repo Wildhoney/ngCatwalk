@@ -122,7 +122,7 @@ module.exports = function(grunt) {
 
     });
 
-    grunt.loadNpmTasks('grunt-contrib-jasmine');
+//    grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-copy');
@@ -132,6 +132,6 @@ module.exports = function(grunt) {
 
     grunt.registerTask('build', ['copy', 'uglify', 'compress', 'comments', 'jsbeautifier']);
     grunt.registerTask('test', ['jshint']);
-    grunt.registerTask('default', ['jshint', 'jasmine', 'compress', 'copy', 'uglify', 'comments', 'jsbeautifier']);
+    grunt.registerTask('default', ['jshint', 'compress', 'copy', 'uglify', 'comments', 'jsbeautifier']);
 
 };
