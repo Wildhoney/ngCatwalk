@@ -1,0 +1,11 @@
+body {
+    padding: 20px;
+}
+
+div.input-group {
+    width: 350px;
+}
+
+div.input-group span.button {
+    cursor: pointer;
+}

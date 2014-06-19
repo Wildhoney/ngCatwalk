@@ -17,11 +17,19 @@
     <script type="text/javascript" src="js/Default.js"></script>
     <script type="text/javascript" src="js/controllers/CatsController.js"></script>
 
+    <!-- Aesthetics! -->
+    <link rel="stylesheet" type="text/css" href="css/default.css" />
+    <link rel="stylesheet" type="text/css" href="js/vendor/bootstrap/dist/css/bootstrap.css" />
+
 </head>
 
 <body ng-app="catwalkApp" ng-controller="CatsController">
 
-    <input type="button" value="Add Cat" ng-click="addCat('Kipper')" />
+    <div class="input-group">
+        <span class="input-group-addon">$</span>
+        <input ng-model="name" type="text" class="form-control">
+        <span class="input-group-addon button" ng-click="createCat(name)">Add Cat</span>
+    </div>
 
     <h1>Cats ({{cats.length}})</h1>
 

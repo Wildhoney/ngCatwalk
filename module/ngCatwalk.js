@@ -10,7 +10,7 @@
      * @author Adam Timberlake
      * @link https://github.com/Wildhoney/ngCatwalk
      */
-    app.service('catwalk', ['$window', '$rootScope', function catwalkService($window, $rootScope) {
+    app.service('catwalk', ['$rootScope', function catwalkService($rootScope) {
 
         // Iterate over each event listener for Angular.js style observers.
         $angular.forEach(['create', 'read', 'update', 'delete'], function forEach(operation) {

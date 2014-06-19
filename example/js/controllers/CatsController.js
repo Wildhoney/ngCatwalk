@@ -11,6 +11,12 @@
          */
         $scope.cats = catwalk.collection('cat');
 
+        /**
+         * @property name
+         * @type {String}
+         */
+        $scope.name = '';
+
         // Create our cat collection.
         catwalk.collection('cat', {
 
@@ -36,14 +42,17 @@
         });
 
         /**
-         * @property addCat
+         * @property createCat
          * @param name {String}
          * @return {void}
          */
-        $scope.addCat = function addCat(name) {
+        $scope.createCat = function createCat(name) {
 
             // Create our cat model!
             catwalk.createModel('cat', { name: name });
+
+            // ...And reset the name property.
+            $scope.name = '';
 
         };
 
