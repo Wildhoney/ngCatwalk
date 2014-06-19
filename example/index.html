@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 
     <title>ngCatwalk</title>
@@ -10,9 +11,26 @@
     <script type="text/javascript" src="js/vendor/q/q.js"></script>
     <script type="text/javascript" src="js/vendor/crossfilter/crossfilter.js"></script>
     <script type="text/javascript" src="js/vendor/catwalk/dist/catwalk.js"></script>
+    <script type="text/javascript" src="js/vendor/ng-catwalk/ngCatwalk.js"></script>
+
+    <!-- Application! -->
+    <script type="text/javascript" src="js/Default.js"></script>
+    <script type="text/javascript" src="js/controllers/CatsController.js"></script>
 
 </head>
-<body>
+
+<body ng-app="catwalkApp" ng-controller="CatsController">
+
+    <input type="button" value="Add Cat" ng-click="addCat('Kipper')" />
+
+    <h1>Cats ({{cats.length}})</h1>
+
+    <ul>
+        <li ng-repeat="cat in cats">
+            {{cat.name}}
+        </li>
+    </ul>
 
 </body>
+
 </html>
