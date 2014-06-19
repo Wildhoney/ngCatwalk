@@ -48,11 +48,11 @@
         };
 
         /**
-         * @method removeCat
+         * @method deleteCat
          * @param model {Object}
          * @return {void}
          */
-        $scope.removeCat = function removeCat(model) {
+        $scope.deleteCat = function deleteCat(model) {
 
             // Remove the requested model!
             catwalk.deleteModel('cat', model);

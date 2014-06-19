@@ -1,5 +1,7 @@
 (function ngCatwalk($angular, $catwalk) {
 
+    "use strict";
+
     // Bootstrap ngCatwalk!
     var app = $angular.module('ngCatwalk', []);
 
@@ -8,7 +10,7 @@
      * @author Adam Timberlake
      * @link https://github.com/Wildhoney/ngCatwalk
      */
-    app.service('catwalk', ['$window', '$rootScope', '$timeout', function catwalkService($window, $rootScope, $timeout) {
+    app.service('catwalk', ['$window', '$rootScope', function catwalkService($window, $rootScope) {
 
         // Iterate over each event listener for Angular.js style observers.
         $angular.forEach(['create', 'read', 'update', 'delete'], function forEach(operation) {
@@ -83,6 +85,7 @@
             if (blueprint) {
 
                 // Create the collection using the prototype chain.
+                /*jshint proto: true */
                 return catwalk.__proto__.collection(name, blueprint);
 
             }
