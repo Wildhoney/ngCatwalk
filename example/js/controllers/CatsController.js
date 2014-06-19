@@ -47,6 +47,18 @@
 
         };
 
+        /**
+         * @method removeCat
+         * @param model {Object}
+         * @return {void}
+         */
+        $scope.removeCat = function removeCat(model) {
+
+            // Remove the requested model!
+            catwalk.deleteModel('cat', model);
+
+        };
+
     });
 
 })(window.catwalkApp);

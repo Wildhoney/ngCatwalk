@@ -27,7 +27,7 @@
 
     <ul>
         <li ng-repeat="cat in cats">
-            {{cat.name}}
+            {{cat.name}} (<a href="#" ng-click="removeCat(cat)">Delete</a>)
         </li>
     </ul>
 
