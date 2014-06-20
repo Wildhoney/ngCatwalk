@@ -1,49 +1,71 @@
-( function ngCatwalk( $angular, $catwalk ) {
+( function ngCatwalk( $angular ) {
     "use strict";
-    var app = $angular.module( 'ngCatwalk', [] );
-    app.service( 'catwalk', [ '$window', '$rootScope',
-        function catwalkService( $window, $rootScope ) {
-            $angular.forEach( [ 'create', 'read', 'update', 'delete' ], function forEach( operation ) {
-                $catwalk.event.on( operation, function ( collectionName ) {
-                    var eventName = 'catwalk/' + operation + '/' + collectionName;
-                    $rootScope.$broadcast( eventName, arguments[ 0 ], arguments[ 1 ], arguments[ 2 ] );
-                } );
-            } );
-            $catwalk.updated( function ( collections ) {
-                $rootScope.$apply( function () {
-                    for ( var name in collections ) {
-                        if ( collections.hasOwnProperty( name ) ) {
-                            $angular.copy( collections[ name ].all(), catwalk.collections[ name ] );
+    var app = $angular.module( 'ngCatwalk', [ 'ngCrossfilter' ] );
+    var ngCatwalkTypecast = {
+        string: function ( defaultValue ) {
+            return function toString( value ) {
+                return typeof value === 'undefined' ? this._default( defaultValue, '' ) : String( value );
+            }.bind( this )
+        },
+        autoincrement: function () {
+            var value = 0;
+            return function toAutoincrement() {
+                return ++value;
+            }.bind( this )
+        },
+        number: function ( defaultValue ) {
+            return function toNumber( value ) {
+                return typeof value === 'undefined' ? this._default( defaultValue, 0 ) : Number( value );
+            }.bind( this )
+        },
+        _default: function _default( defaultValue, fallbackValue ) {
+            return typeof defaultValue === 'undefined' ? fallbackValue : defaultValue;
+        }
+    };
+    app.service( 'catwalk', [ '$rootScope', 'Crossfilter',
+        function CatwalkService( $rootScope, Crossfilter ) {
+            function Catwalk() {}
+            Catwalk.prototype = {
+                _collections: {},
+                attribute: ngCatwalkTypecast,
+                collection: function collection( name, properties ) {
+                    if ( !this._collections[ name ] ) {
+                        this._collections[ name ] = new Crossfilter( [] );
+                    }
+                    if ( properties ) {
+                        this._collections[ name ].primaryKey( properties._primaryKey );
+                        this._collections[ name ].blueprint = properties;
+                        for ( var property in properties ) {
+                            if ( properties.hasOwnProperty( property ) ) {
+                                this._collections[ name ].addDimension( property );
+                            }
                         }
                     }
-                } );
-            } );
-            var Catwalk = function Catwalk() {};
-            Catwalk.prototype = $catwalk;
-            var catwalk = new Catwalk();
-            catwalk.collections = {};
-            catwalk.collection = function collection( name, blueprint ) {
-                if ( !catwalk.collections[ name ] ) {
-                    catwalk.collections[ name ] = [];
+                    return this._collections[ name ];
+                },
+                createModel: function createModel( name, properties ) {
+                    var model = this._prepareModel( name, properties );
+                    this.collection( name ).addModel( model );
+                },
+                _prepareModel: function _prepareModel( name, model ) {
+                    model = model || {};
+                    var blueprint = this.collection( name ).blueprint;
+                    for ( var property in blueprint ) {
+                        if ( blueprint.hasOwnProperty( property ) ) {
+                            if ( property.charAt( 0 ) === '_' ) {
+                                continue;
+                            }
+                            var typecast = blueprint[ property ];
+                            if ( typeof model[ property ] === 'undefined' ) {
+                                model[ property ] = undefined;
+                            }
+                            model[ property ] = typecast( model[ property ] );
+                        }
+                    }
+                    return model;
                 }
-                if ( blueprint ) {
-                    return catwalk.__proto__.collection( name, blueprint );
-                }
-                return catwalk.collections[ name ];
             };
-            catwalk.createModel = function createModel( name, properties ) {
-                catwalk.using( name ).createModel( properties );
-            };
-            catwalk.updateModel = function updateModel( name, model, properties ) {
-                catwalk.using( name ).updateModel( model, properties );
-            };
-            catwalk.deleteModel = function deleteModel( name, model ) {
-                catwalk.using( name ).deleteModel( model );
-            };
-            catwalk.using = function using( name ) {
-                return $catwalk.collection( name );
-            };
-            return catwalk;
+            return new Catwalk();
         }
     ] );
-} )( window.angular, window.catwalk );
+} )( window.angular );
