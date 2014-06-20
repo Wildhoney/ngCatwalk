@@ -7,17 +7,15 @@
 
     <!-- Dependencies! -->
     <script type="text/javascript" src="js/vendor/angular/angular.js"></script>
-    <script type="text/javascript" src="js/vendor/underscore/underscore.js"></script>
-    <script type="text/javascript" src="js/vendor/q/q.js"></script>
     <script type="text/javascript" src="js/vendor/crossfilter/crossfilter.js"></script>
-    <script type="text/javascript" src="js/vendor/catwalk/dist/catwalk.js"></script>
+    <script type="text/javascript" src="js/vendor/ng-crossfilter/dist/ng-crossfilter.js"></script>
     <script type="text/javascript" src="js/vendor/ng-catwalk/ng-catwalk.js"></script>
 
     <!-- Application! -->
     <script type="text/javascript" src="js/Default.js"></script>
     <script type="text/javascript" src="js/controllers/CatsController.js"></script>
 
-    <!-- Aesthetics! -->
+    <!-- Beautification! -->
     <link rel="stylesheet" type="text/css" href="css/default.css" />
     <link rel="stylesheet" type="text/css" href="js/vendor/bootstrap/dist/css/bootstrap.css" />
 
@@ -25,17 +23,33 @@
 
 <body ng-app="catwalkApp" ng-controller="CatsController">
 
-    <div class="input-group">
-        <span class="input-group-addon">$</span>
-        <input ng-model="name" type="text" class="form-control">
-        <span class="input-group-addon button" ng-click="createCat(name)">Add Cat</span>
+    <div class="input-group cat">
+        <span class="input-group-addon">Cat:</span>
+        <input ng-model="catName" type="text" class="form-control">
+        <span class="input-group-addon button" ng-click="createCat(catName)">Add</span>
     </div>
 
-    <h1>Cats ({{cats.length}})</h1>
+    <div class="input-group colour">
+        <span class="input-group-addon">Colour:</span>
+        <input ng-model="colourName" type="text" class="form-control">
+        <span class="input-group-addon button" ng-click="createColour(colourName)">Add</span>
+    </div>
+
+    <!--<h1>Cats ({{cats.length}})</h1>-->
+    <h1>Collection ({{cats.length}})</h1>
 
     <ul>
         <li ng-repeat="cat in cats">
-            {{cat.name}} (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
+
+            {{cat.name}} (ID: {{cat.id}}) has {{cat.colours.length}} colours (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
+
+            <ul>
+                <li ng-repeat="colour in colours">
+                    <input type="checkbox" ng-click="associateColour(cat, colour.name)" />
+                    {{colour.name}}
+                </li>
+            </ul>
+
         </li>
     </ul>
 

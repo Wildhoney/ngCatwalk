@@ -6,6 +6,10 @@ div.input-group {
     width: 350px;
 }
 
+div.input-group.cat {
+    margin-bottom: 15px;
+}
+
 div.input-group span.button {
     cursor: pointer;
 }

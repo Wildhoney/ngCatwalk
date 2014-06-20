@@ -6,16 +6,16 @@
     $app.controller('CatsController', function catsController($scope, catwalk) {
 
         /**
+         * @property catName
+         * @type {String}
+         */
+        $scope.catName = 'Kipper';
+
+        /**
          * @property cats
          * @type {Array}
          */
         $scope.cats = catwalk.collection('cat');
-
-        /**
-         * @property name
-         * @type {String}
-         */
-        $scope.name = '';
 
         // Create our cat collection.
         catwalk.collection('cat', {
@@ -27,18 +27,17 @@
             _primaryKey: 'name',
 
             /**
+             * @property id
+             *
+             */
+            id: catwalk.attribute.autoincrement(),
+
+            /**
              * @property name
              * @type {String}
              */
-            name: catwalk.attribute.string
+            name: catwalk.attribute.string()
 
-        });
-
-        /**
-         * @event catwalk/create/cat
-         */
-        $scope.$on('catwalk/create/cat', function createCat(event, collectionName, deferred, model) {
-            deferred.resolve();
         });
 
         /**
@@ -52,19 +51,7 @@
             catwalk.createModel('cat', { name: name });
 
             // ...And reset the name property.
-            $scope.name = '';
-
-        };
-
-        /**
-         * @method deleteCat
-         * @param model {Object}
-         * @return {void}
-         */
-        $scope.deleteCat = function deleteCat(model) {
-
-            // Remove the requested model!
-            catwalk.deleteModel('cat', model);
+            $scope.catName = '';
 
         };
 
