@@ -55,6 +55,13 @@
 
         };
 
+        $scope.deleteCat = function deleteCat(model) {
+
+            // Delete our cat model!
+            catwalk.deleteModel('cat', model);
+
+        }
+
     });
 
 })(window.catwalkApp);
