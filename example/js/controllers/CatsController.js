@@ -21,10 +21,10 @@
         catwalk.collection('cat', {
 
             /**
-             * @property _primaryKey
+             * @property primaryKey
              * @type {String}
              */
-            _primaryKey: 'name',
+            primaryKey: 'name',
 
             /**
              * @property id
