@@ -1,10 +1,17 @@
 language: node_js
 node_js:
-  - '0.10'
+- '0.10'
 before_script:
-  - npm install -g grunt-cli
-  - npm install -g bower
+- npm install -g grunt-cli
+- npm install -g bower
 script:
-  - npm install
-  - bower install
-  - grunt test
+- npm install
+- bower install
+- grunt test
+deploy:
+  provider: heroku
+  api_key:
+    secure: RXJSgvp//xMLtdwRd55NhJYWwpFs4yrPcKYEpQZ8onweoaX6PDsQgBFk8RacED+qwNCbqTWmSsEnHpAttH25njoKA8XcnbXM99zCaSwGV6NcVUD4vf+DOV3B/f7aI1ICX7pOHUeAN3jBmziadzJ7Je5ooer4ZfaIddIMXRDXKks=
+  app: ng-catwalk
+  on:
+    repo: Wildhoney/ngCatwalk

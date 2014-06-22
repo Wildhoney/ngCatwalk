@@ -36,7 +36,9 @@
             var value = 0;
 
             return function toAutoincrement() {
+
                 return ++value;
+
             }.bind(this)
 
         },
@@ -121,7 +123,7 @@
                     if (!this._collections[name]) {
 
                         // Create the empty collection.
-                        this._collections[name] = new Crossfilter([]);
+                        this._collections[name] = new Crossfilter([], undefined, Crossfilter.STRATEGY_TRANSIENT);
 
                     }
 

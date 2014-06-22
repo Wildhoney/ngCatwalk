@@ -41,12 +41,14 @@
     <ul>
         <li ng-repeat="cat in cats">
 
-            {{cat.name}} (id: {{cat.id}}) has {{cat.colours.length}} colours (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
+            {{cat.name}} (id: {{cat.id}}) has {{cat.friends.length}} friends (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
+
+            {{cat.friends}}
 
             <ul>
-                <li ng-repeat="colour in colours">
-                    <input type="checkbox" ng-click="associateColour(cat, colour.name)" />
-                    {{colour.name}}
+                <li ng-repeat="friend in cats">
+                    <input type="checkbox" ng-click="addFriend(cat, friend.name)" />
+                    {{cat.name}}
                 </li>
             </ul>
 
