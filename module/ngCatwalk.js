@@ -6,6 +6,16 @@
     var app = $angular.module('ngCatwalk', ['ngCrossfilter']);
 
     /**
+     * @method _throwException
+     * @param message {String}
+     * @return {void}
+     * @private
+     */
+    var _throwException = function _throwException(message) {
+        throw "ngCatwalk: " + message + ".";
+    };
+
+    /**
      * @module ngCatwalk
      * @submodule ngCatwalkRelationship
      * @type {Object}
@@ -378,6 +388,14 @@
 
                             // Rename property to the defined property after typecasting.
                             var accessor = blueprint[index];
+
+                            if (this._isRelationship(accessor)) {
+
+                                // Prevent the redefining of a relationship property.
+                                _throwException("Cannot redefine a relationship");
+
+                            }
+
                             model[index] = accessor(properties[index]);
 
                         }
@@ -417,6 +435,16 @@
                 },
 
                 /**
+                 * @method _isRelationship
+                 * @param accessor {Function}
+                 * @return {Boolean}
+                 * @private
+                 */
+                _isRelationship: function _isRelationship(accessor) {
+                    return accessor.toString().match(/(HasManyRelationship|HasOneRelationship)/i);
+                },
+
+                /**
                  * @property _prepareModel
                  * @param name {String}
                  * @param model {Object}
@@ -452,7 +480,7 @@
                             }
 
                             // Determine if we're dealing with a relationship.
-                            if (accessor.toString().match(/Relationship/i)) {
+                            if (this._isRelationship(accessor)) {
 
                                 // Configure the relationship.
                                 /*jslint newcap:true */
