@@ -4,7 +4,9 @@
   "description": "Catwalk.js Angularised.",
   "main": "module/ngCatwalk.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "start": "node server/default.js",
+    "postinstall": "bower install; grunt build"
   },
   "repository": {
     "type": "git",
