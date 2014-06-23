@@ -337,10 +337,23 @@
                  */
                 updateModel: function updateModel(name, model, properties) {
 
+                    // Create a copy of the existing model to use if the promise is
+                    // rejected by the developer.
+                    var oldProperties = {};
+
+                    for (var index in properties) {
+
+                        // Usual suspect!
+                        if (properties.hasOwnProperty(index)) {
+                            oldProperties[index] = model[index];
+                        }
+
+                    }
+
                     this._updateModel(name, model, properties);
 
                     this._awaitFeedback('update', name, model, function failed() {
-
+                        this._updateModel(name, model, oldProperties);
                     });
 
                 },
