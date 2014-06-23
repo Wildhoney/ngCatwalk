@@ -43,6 +43,10 @@
 
         });
 
+        $scope.$on('catwalk/create/cat', function(event, deferred, model) {
+            deferred.resolve();
+        });
+
         /**
          * @property createCat
          * @param name {String}

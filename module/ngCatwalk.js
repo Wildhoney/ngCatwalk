@@ -185,7 +185,7 @@
      * @author Adam Timberlake
      * @link https://github.com/Wildhoney/ngCatwalk
      */
-    app.service('catwalk', ['$rootScope', 'Crossfilter',
+    app.service('catwalk', ['$rootScope', '$q', 'Crossfilter',
 
         /**
          * @method CatwalkService
@@ -193,7 +193,7 @@
          * @param Crossfilter
          * @return {Object}
          */
-            function CatwalkService($rootScope, Crossfilter) {
+            function CatwalkService($rootScope, $q, Crossfilter) {
 
             /**
              * @module ngCatwalk
@@ -303,6 +303,15 @@
 
                     this.collection(name).addModel(model);
 
+                    // Broadcast the event to resolve or reject the promise.
+                    var deferred = $q.defer();
+                    $rootScope.$broadcast('catwalk/create/' + name, deferred, model);
+
+                    // When the creation has been rejected.
+                    deferred.promise.catch(function fail() {
+                        this.deleteModel(name, model);
+                    }.bind(this));
+
                 },
 
                 /**
@@ -352,7 +361,7 @@
 
                             if (accessor.toString().match(/Relationship/i)) {
 
-                                // Configure the many relationship.
+                                // Configure the relationship.
                                 new accessor(model, property);
                                 continue;
 
