@@ -496,6 +496,20 @@
 
                     }
 
+                    // Remove any properties that are not in the blueprint.
+                    for (var index in model) {
+
+                        // Usual suspect!
+                        if (model.hasOwnProperty(index)) {
+
+                            if (typeof blueprint[index] === 'undefined') {
+                                delete model[index];
+                            }
+
+                        }
+
+                    }
+
                     return model;
 
                 }

@@ -63,7 +63,7 @@
         $scope.createCat = function createCat(name) {
 
             // Create our cat model!
-            catwalk.createModel('cat', { name: name });
+            catwalk.createModel('cat', { name: name, unused: 'Ah' });
 
             // ...And reset the name property.
             $scope.catName = '';
