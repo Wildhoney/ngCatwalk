@@ -322,7 +322,7 @@
                     this._awaitFeedback('create', name, model, function failed() {
 
                         // Delete the model silently if the promise fails.
-                        this.deleteModel(name, model);
+                        this._deleteModel(name, model);
 
                     });
 
@@ -335,7 +335,16 @@
                  * @return {void}
                  */
                 deleteModel: function deleteModel(name, model) {
+
                     this._deleteModel(name, model);
+
+                    this._awaitFeedback('delete', name, model, function failed() {
+
+                        // Restore the model from the garbage collection.
+                        this.collection(name).restoreModel(model);
+
+                    });
+
                 },
 
                 /**

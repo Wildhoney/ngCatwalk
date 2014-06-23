@@ -48,8 +48,7 @@
         });
 
         $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
-            console.log('Delete');
-            deferred.reject();
+            deferred.resolve();
         });
 
         /**
