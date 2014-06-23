@@ -41,7 +41,7 @@
 
             return function HasManyRelationship(model, property) {
 
-                var values = [];
+                var values = model[property] || [];
 
                 Object.defineProperty(model, property, {
 
