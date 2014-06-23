@@ -288,6 +288,21 @@
 
                 },
 
+                _awaitFeedback: function _awaitFeedback(type, name, model, failedFunction) {
+
+                    // Broadcast the event to resolve or reject the promise.
+                    var deferred = $q.defer();
+
+                    // Broadcast the event to handle the deferred.
+                    $rootScope.$broadcast('catwalk/' + type + '/' + name, deferred, model);
+
+                    // Invoke the callback if the promise fails.
+                    deferred.promise.catch(function failed() {
+                        failedFunction.apply(this);
+                    }.bind(this));
+
+                },
+
                 /**
                  * @method createModel
                  * @param name {String}
@@ -301,16 +316,15 @@
                     // Inject the catwalk ID into the model.
                     model[this._primaryName] = ++this._primaryIndex;
 
+                    // Add the model to the collection.
                     this.collection(name).addModel(model);
 
-                    // Broadcast the event to resolve or reject the promise.
-                    var deferred = $q.defer();
-                    $rootScope.$broadcast('catwalk/create/' + name, deferred, model);
+                    this._awaitFeedback('create', name, model, function failed() {
 
-                    // When the creation has been rejected.
-                    deferred.promise.catch(function fail() {
+                        // Delete the model silently if the promise fails.
                         this.deleteModel(name, model);
-                    }.bind(this));
+
+                    });
 
                 },
 
@@ -321,6 +335,17 @@
                  * @return {void}
                  */
                 deleteModel: function deleteModel(name, model) {
+                    this._deleteModel(name, model);
+                },
+
+                /**
+                 * @method _deleteModel
+                 * @param name {String}
+                 * @param model {Object}
+                 * @return {void}
+                 * @private
+                 */
+                _deleteModel: function deleteModel(name, model) {
                     this.collection(name).deleteModel(model);
                 },
 
@@ -359,6 +384,7 @@
 
                             }
 
+                            // Determine if we're dealing with a relationship.
                             if (accessor.toString().match(/Relationship/i)) {
 
                                 // Configure the relationship.

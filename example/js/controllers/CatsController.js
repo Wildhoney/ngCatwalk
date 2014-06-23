@@ -47,6 +47,11 @@
             deferred.resolve();
         });
 
+        $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
+            console.log('Delete');
+            deferred.reject();
+        });
+
         /**
          * @property createCat
          * @param name {String}
