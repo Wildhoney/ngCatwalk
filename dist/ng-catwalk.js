@@ -159,6 +159,13 @@
                             model[ property ] = accessor( model[ property ] );
                         }
                     }
+                    for ( var index in model ) {
+                        if ( model.hasOwnProperty( index ) ) {
+                            if ( typeof blueprint[ index ] === 'undefined' ) {
+                                delete model[ index ];
+                            }
+                        }
+                    }
                     return model;
                 }
             };
