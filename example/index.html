@@ -43,12 +43,21 @@
 
             {{cat.name}} (id: {{cat.id}}) has {{cat.friends.length}} friends (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
 
-            {{cat.friends}}
+            Friends:
+
+            <ul>
+                <li>
+                    <strong>Friends:</strong>
+                    <span ng-repeat="friend in cat.friends">
+                        {{friend.name}}
+                    </span>
+                </li>
+            </ul>
 
             <ul>
                 <li ng-repeat="friend in cats">
                     <input type="checkbox" ng-click="addFriend(cat, friend.name)" />
-                    {{cat.name}}
+                    {{friend.name}}
                 </li>
             </ul>
 

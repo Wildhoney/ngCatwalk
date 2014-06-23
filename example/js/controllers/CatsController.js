@@ -84,16 +84,15 @@
          */
         $scope.addFriend = function addFriend(model, name) {
 
-            var index = model.friends.indexOf(name);
+//            var index = model.friends.indexOf(name);
+//
+            if (model.friends.hasModel(name)) {
 
-            if (index !== -1) {
-
-                model.friends.splice(index, 1);
+                model.friends.deleteModel(name);
                 return;
 
             }
 
-//            model.friends = [name];
             model.friends.addModel(name);
 
         };
