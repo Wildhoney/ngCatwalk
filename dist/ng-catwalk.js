@@ -1,6 +1,9 @@
 ( function ngCatwalk( $angular ) {
     "use strict";
     var app = $angular.module( 'ngCatwalk', [ 'ngCrossfilter' ] );
+    var _throwException = function _throwException( message ) {
+        throw "ngCatwalk: " + message + ".";
+    };
     var ngCatwalkRelationship = {
         _collections: {},
         hasMany: function hasMany( options ) {
@@ -118,6 +121,9 @@
                     for ( var index in properties ) {
                         if ( properties.hasOwnProperty( index ) ) {
                             var accessor = blueprint[ index ];
+                            if ( this._isRelationship( accessor ) ) {
+                                _throwException( "Cannot redefine a relationship" );
+                            }
                             model[ index ] = accessor( properties[ index ] );
                         }
                     }
@@ -131,6 +137,9 @@
                 _deleteModel: function deleteModel( name, model ) {
                     this.collection( name ).deleteModel( model );
                 },
+                _isRelationship: function _isRelationship( accessor ) {
+                    return accessor.toString().match( /(HasManyRelationship|HasOneRelationship)/i );
+                },
                 _prepareModel: function _prepareModel( name, model ) {
                     model = model || {};
                     var blueprint = this.collection( name ).blueprint;
@@ -143,7 +152,7 @@
                             if ( typeof model[ property ] === 'undefined' ) {
                                 model[ property ] = undefined;
                             }
-                            if ( accessor.toString().match( /Relationship/i ) ) {
+                            if ( this._isRelationship( accessor ) ) {
                                 new accessor( model, property );
                                 continue;
                             }
