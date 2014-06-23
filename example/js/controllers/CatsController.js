@@ -79,6 +79,21 @@
         };
 
         /**
+         * @method updateCatName
+         * @param model {Object}
+         * @param name {String}
+         * @return {void}
+         */
+        $scope.updateCatName = function updateCat(model, name) {
+
+            // Update our cat model with a new name!
+            catwalk.updateModel('cat', model, {
+                name: name
+            });
+
+        };
+
+        /**
          * @method addFriend
          * @param model {Object}
          * @param name {String}

@@ -41,9 +41,12 @@
     <ul>
         <li ng-repeat="cat in cats">
 
-            {{cat.name}} (id: {{cat.id}}) has {{cat.friends.length}} friends (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
-            ID: {{cat.__catwalkId__}}
+            {{cat.name}} (id: {{cat.id}}) has {{cat.friends.length}}
+            friends (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
 
+            (<a href="#" ng-click="updateCatName(cat, 'Bob')">rename {{cat.name}} to "Bob"</a>)
+
+            {{cat.friends}}
             Friends:
 
             <ul>

@@ -329,6 +329,51 @@
                 },
 
                 /**
+                 * @method updateModel
+                 * @param name {String}
+                 * @param model {Object}
+                 * @param properties {Object}
+                 * @return {void}
+                 */
+                updateModel: function updateModel(name, model, properties) {
+
+                    this._updateModel(name, model, properties);
+
+                    this._awaitFeedback('update', name, model, function failed() {
+
+                    });
+
+                },
+
+                /**
+                 * @method _updateModel
+                 * @param name {String}
+                 * @param model {Object}
+                 * @param properties {Object}
+                 * @return {void}
+                 * @private
+                 */
+                _updateModel: function _updateModel(name, model, properties) {
+
+                    // Find the blueprint we're currently dealing with.
+                    var blueprint = this._collections[name].blueprint;
+
+                    for (var index in properties) {
+
+                        // Usual suspect!
+                        if (properties.hasOwnProperty(index)) {
+
+                            // Rename property to the defined property after typecasting.
+                            var accessor = blueprint[index];
+                            model[index] = accessor(properties[index]);
+
+                        }
+
+                    }
+
+                },
+
+                /**
                  * @method deleteModel
                  * @param name {String}
                  * @param model {Object}
