@@ -1,6 +1,6 @@
 {
   "name": "ng-catwalk",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Catwalk.js Angularised.",
   "main": "module/ngCatwalk.js",
   "scripts": {

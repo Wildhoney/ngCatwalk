@@ -397,6 +397,7 @@
                             if (accessor.toString().match(/Relationship/i)) {
 
                                 // Configure the relationship.
+                                /*jslint newcap:true */
                                 new accessor(model, property);
                                 continue;
 
