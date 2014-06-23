@@ -101,6 +101,27 @@
                         this._deleteModel( name, model );
                     } );
                 },
+                updateModel: function updateModel( name, model, properties ) {
+                    var oldProperties = {};
+                    for ( var index in properties ) {
+                        if ( properties.hasOwnProperty( index ) ) {
+                            oldProperties[ index ] = model[ index ];
+                        }
+                    }
+                    this._updateModel( name, model, properties );
+                    this._awaitFeedback( 'update', name, model, function failed() {
+                        this._updateModel( name, model, oldProperties );
+                    } );
+                },
+                _updateModel: function _updateModel( name, model, properties ) {
+                    var blueprint = this._collections[ name ].blueprint;
+                    for ( var index in properties ) {
+                        if ( properties.hasOwnProperty( index ) ) {
+                            var accessor = blueprint[ index ];
+                            model[ index ] = accessor( properties[ index ] );
+                        }
+                    }
+                },
                 deleteModel: function deleteModel( name, model ) {
                     this._deleteModel( name, model );
                     this._awaitFeedback( 'delete', name, model, function failed() {
