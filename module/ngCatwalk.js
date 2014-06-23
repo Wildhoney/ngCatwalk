@@ -7,6 +7,117 @@
 
     /**
      * @module ngCatwalk
+     * @submodule ngCatwalkRelationship
+     * @type {Object}
+     */
+    var ngCatwalkRelationship = {
+
+        /**
+         * @property _collections
+         * @type {Object}
+         * @private
+         */
+        _collections: {},
+
+        /**
+         * @method options
+         * @param options {Object}
+         * @return {Function}
+         */
+        hasMany: function hasMany(options) {
+
+            // Find the collection we're currently dealing with.
+            var collection = this._collections[options.collection];
+
+            return function HasManyRelationship(model, property) {
+
+                var values = [];
+
+                Object.defineProperty(model, property, {
+
+                    /**
+                     * @method get
+                     * @return {Array}
+                     */
+                    get: function get() {
+
+                        // Extract the models from the collection based on the relationship.
+                        collection.filterBy(options.foreignKey, values, function inArray(expected, actual) {
+                            return expected.indexOf(actual) !== -1;
+                        });
+
+                        // Fetch the collection and then reset the filter.
+                        var models = collection._collection(Infinity);
+                        collection.unfilterBy(options.foreignKey);
+
+                        /**
+                         * @method _resolve
+                         * @param model {Object|String|Number}
+                         * @return {String|Number}
+                         * @private
+                         */
+                        models._resolve = function _resolve(model) {
+
+                            if (typeof model === 'object') {
+
+                                // Extract the property from the object if we've
+                                // passed in a model.
+                                return model[property]
+
+                            }
+
+                            return model;
+
+                        };
+
+                        /**
+                         * @method addModel
+                         * @param model {Object|String|Number}
+                         * @return {void}
+                         */
+                        models.addModel = function addModel(model) {
+                            values.push(models._resolve(model));
+                        };
+
+                        /**
+                         * @method deleteModel
+                         * @param model {Object|String|Number}
+                         * @return {void}
+                         */
+                        models.deleteModel = function deleteModel(model) {
+                            var index = values.indexOf(models._resolve(model));
+                            values.splice(index, 1);
+                        };
+
+                        /**
+                         * @method hasModel
+                         * @param model {Object|String|Number}
+                         * @return {Boolean}
+                         */
+                        models.hasModel = function hasModel(model) {
+                            return values.indexOf(models._resolve(model)) !== -1;
+                        };
+
+                        return models;
+
+                    },
+
+                    /**
+                     * @method set
+                     * @return {void}
+                     */
+                    set: function set() {}
+
+                });
+
+            };
+
+        }
+
+    };
+
+    /**
+     * @module ngCatwalk
      * @submodule ngCatwalkTypecast
      * @type {Object}
      */
@@ -36,9 +147,7 @@
             var value = 0;
 
             return function toAutoincrement() {
-
                 return ++value;
-
             }.bind(this)
 
         },
@@ -91,13 +200,32 @@
              * @submodule Catwalk
              * @constructor
              */
-            function Catwalk() {}
+            function Catwalk() {
+
+                // Copy the collections into the relationship submodule.
+                this.relationship._collections = this._collections;
+                this.relationship.$rootScope = $rootScope;
+
+            }
 
             /**
              * @property prototype
              * @type {Object}
              */
             Catwalk.prototype = {
+
+                /**
+                 * @property _primaryName
+                 * @type {String}
+                 */
+                _primaryName: '__catwalkId__',
+
+                /**
+                 * @property _primaryIndex
+                 * @type {Number}
+                 * @default 0
+                 */
+                _primaryIndex: 0,
 
                 /**
                  * @property _collections
@@ -113,6 +241,12 @@
                 attribute: ngCatwalkTypecast,
 
                 /**
+                 * @property relationship
+                 * @type {Object}
+                 */
+                relationship: ngCatwalkRelationship,
+
+                /**
                  * @method collection
                  * @param name {String}
                  * @param properties {Object}
@@ -123,14 +257,17 @@
                     if (!this._collections[name]) {
 
                         // Create the empty collection.
-                        this._collections[name] = new Crossfilter([], undefined, Crossfilter.STRATEGY_TRANSIENT);
+                        this._collections[name] = new Crossfilter([]);
 
                     }
 
                     if (properties) {
 
+                        // Define the primary key as a number.
+                        properties[this._primaryName] = this.attribute.number();
+
                         // Create the collection if we've defined the properties;
-                        this._collections[name].primaryKey(properties._primaryKey);
+                        this._collections[name].primaryKey(this._primaryName);
                         this._collections[name].blueprint = properties;
 
                         for (var property in properties) {
@@ -158,8 +295,24 @@
                  * @return {Array}
                  */
                 createModel: function createModel(name, properties) {
+
                     var model = this._prepareModel(name, properties);
+
+                    // Inject the catwalk ID into the model.
+                    model[this._primaryName] = ++this._primaryIndex;
+
                     this.collection(name).addModel(model);
+
+                },
+
+                /**
+                 * @method deleteModel
+                 * @param name {String}
+                 * @param model {Object}
+                 * @return {void}
+                 */
+                deleteModel: function deleteModel(name, model) {
+                    this.collection(name).deleteModel(model);
                 },
 
                 /**
@@ -181,14 +334,14 @@
 
                         if (blueprint.hasOwnProperty(property)) {
 
-                            if (property.charAt(0) === '_') {
+                            if (property === 'primaryKey') {
 
                                 // Ignore private and protected properties.
                                 continue;
 
                             }
 
-                            var typecast = blueprint[property];
+                            var accessor = blueprint[property];
 
                             if (typeof model[property] === 'undefined') {
 
@@ -197,8 +350,16 @@
 
                             }
 
+                            if (accessor.toString().match(/Relationship/i)) {
+
+                                // Configure the many relationship.
+                                new accessor(model, property);
+                                continue;
+
+                            }
+
                             // Typecast the defined property.
-                            model[property] = typecast(model[property]);
+                            model[property] = accessor(model[property]);
 
                         }
 

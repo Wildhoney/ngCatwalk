@@ -21,12 +21,6 @@
         catwalk.collection('cat', {
 
             /**
-             * @property primaryKey
-             * @type {String}
-             */
-            primaryKey: 'name',
-
-            /**
              * @property id
              *
              */
@@ -57,7 +51,7 @@
         $scope.createCat = function createCat(name) {
 
             // Create our cat model!
-            catwalk.createModel('cat', { name: name });
+            catwalk.createModel('cat', { __catwalkId__: 1, name: name });
 
             // ...And reset the name property.
             $scope.catName = '';
@@ -84,13 +78,9 @@
          */
         $scope.addFriend = function addFriend(model, name) {
 
-//            var index = model.friends.indexOf(name);
-//
             if (model.friends.hasModel(name)) {
-
                 model.friends.deleteModel(name);
                 return;
-
             }
 
             model.friends.addModel(name);
