@@ -56,10 +56,7 @@
         });
 
         $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
-            console.log(property + ': ' + value);
-            deferred.resolve({
-                name: value
-            });
+            deferred.reject();
         });
 
         /**

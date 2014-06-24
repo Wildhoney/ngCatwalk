@@ -109,7 +109,13 @@
                                 createModel(options.collection, model);
                             });
 
-                            // Otherwise we have a failure.
+                            // Otherwise we have a failure, so we'll remove the model from the relationship.
+                            deferred.promise.catch(function failure() {
+
+                                var index = values.indexOf(value);
+                                values.splice(index, 1);
+
+                            });
 
                         });
 
