@@ -3,7 +3,7 @@
     /**
      * @controller CatsController
      */
-    $app.controller('CatsController', function catsController($scope, catwalk) {
+    $app.controller('CatsController', function catsController($scope, $timeout, catwalk) {
 
         /**
          * @property catName
@@ -55,6 +55,13 @@
             deferred.resolve();
         });
 
+        $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
+            console.log(property + ': ' + value);
+            deferred.resolve({
+                name: value
+            });
+        });
+
         /**
          * @property createCat
          * @param name {String}
@@ -62,8 +69,10 @@
          */
         $scope.createCat = function createCat(name) {
 
+            catwalk.createModel('cat', { name: 'Mango' });
+
             // Create our cat model!
-            catwalk.createModel('cat', { name: name, friends: ['Kipper'] });
+            catwalk.createModel('cat', { name: name, friends: ['Splodge', 'Mango'] });
 
             // ...And reset the name property.
             $scope.catName = '';

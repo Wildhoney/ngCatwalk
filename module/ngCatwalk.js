@@ -15,6 +15,10 @@
         throw "ngCatwalk: " + message + ".";
     };
 
+    // Register some common modules from the injector.
+    var injector   = $angular.injector(['ngCatwalk', 'ng']),
+        $q         = injector.get('$q');
+
     /**
      * @module ngCatwalk
      * @submodule ngCatwalkRelationship
@@ -23,25 +27,49 @@
     var ngCatwalkRelationship = {
 
         /**
-         * @property _collections
-         * @type {Object}
-         * @private
-         */
-        _collections: {},
-
-        /**
          * @method options
          * @param options {Object}
          * @return {Function}
          */
         hasMany: function hasMany(options) {
 
-            // Find the collection we're currently dealing with.
-            var collection = this._collections[options.collection];
+            return function HasManyRelationship(model, property, dependencies) {
 
-            return function HasManyRelationship(model, property) {
+                // Find the collection we're currently dealing with.
+                var collection  = this._collections[options.collection],
+                    promises    = {},
+                    values      = model[property] || [],
+                    createModel = this.createModel.bind(this),
+                    $rootScope  = dependencies.rootScope;
 
-                var values = model[property] || [];
+                /**
+                 * @method difference
+                 * @param desired {Array}
+                 * @param got {Array}
+                 */
+                var difference = function difference(desired, got) {
+
+                    var copy = [];
+
+                    // Copy the desired items.
+                    $angular.forEach(desired, function forEach(model) {
+                        copy.push(model);
+                    });
+
+                    // Iteratively remove the properties we have from the desired. Leaving only
+                    // those we don't have.
+                    $angular.forEach(got, function forEach(model) {
+
+                        var property = model[options.foreignKey],
+                            index    = copy.indexOf(property);
+
+                        copy.splice(index, 1);
+
+                    });
+
+                    return copy;
+
+                };
 
                 Object.defineProperty(model, property, {
 
@@ -59,6 +87,31 @@
                         // Fetch the collection and then reset the filter.
                         var models = collection._collection(Infinity);
                         collection.unfilterBy(options.foreignKey);
+
+                        // Create the broadcast events for required models.
+                        $angular.forEach(difference(values, models), function required(value) {
+
+                            if (typeof promises[value] !== 'undefined') {
+
+                                // Don't create another promise if we've already created one.
+                                return;
+
+                            }
+
+                            // Create the promise to be resolve or rejected.
+                            var deferred = promises[value] = $q.defer();
+
+                            // Broadcast the event to resolve the promise.
+                            $rootScope.$broadcast('catwalk/read/' + options.collection, deferred, options.foreignKey, value);
+
+                            // Upon success.
+                            deferred.promise.then(function then(model) {
+                                createModel(options.collection, model);
+                            });
+
+                            // Otherwise we have a failure.
+
+                        });
 
                         /**
                          * @method _resolve
@@ -210,13 +263,7 @@
              * @submodule Catwalk
              * @constructor
              */
-            function Catwalk() {
-
-                // Copy the collections into the relationship submodule.
-                this.relationship._collections = this._collections;
-                this.relationship.$rootScope = $rootScope;
-
-            }
+            function Catwalk() {}
 
             /**
              * @property prototype
@@ -484,7 +531,10 @@
 
                                 // Configure the relationship.
                                 /*jslint newcap:true */
-                                new accessor(model, property);
+                                accessor.call(this, model, property, {
+                                    rootScope: $rootScope
+                                });
+
                                 continue;
 
                             }
