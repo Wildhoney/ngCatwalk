@@ -262,7 +262,7 @@
          * @param Crossfilter
          * @return {Object}
          */
-            function CatwalkService($rootScope, $q, Crossfilter) {
+        function CatwalkService($rootScope, $q, Crossfilter) {
 
             /**
              * @module ngCatwalk
@@ -348,21 +348,6 @@
 
                     // Otherwise we'll retrieve the collection.
                     return this._collections[name];
-
-                },
-
-                _awaitFeedback: function _awaitFeedback(type, name, model, failedFunction) {
-
-                    // Broadcast the event to resolve or reject the promise.
-                    var deferred = $q.defer();
-
-                    // Broadcast the event to handle the deferred.
-                    $rootScope.$broadcast('catwalk/' + type + '/' + name, deferred, model);
-
-                    // Invoke the callback if the promise fails.
-                    deferred.promise.catch(function failed() {
-                        failedFunction.apply(this);
-                    }.bind(this));
 
                 },
 
@@ -567,6 +552,29 @@
                     }
 
                     return model;
+
+                },
+
+                /**
+                 * @method _awaitFeedback
+                 * @param type {String}
+                 * @param name {String}
+                 * @param model {Object}
+                 * @param failedFunction {Function}
+                 * @private
+                 */
+                _awaitFeedback: function _awaitFeedback(type, name, model, failedFunction) {
+
+                    // Broadcast the event to resolve or reject the promise.
+                    var deferred = $q.defer();
+
+                    // Broadcast the event to handle the deferred.
+                    $rootScope.$broadcast('catwalk/' + type + '/' + name, deferred, model);
+
+                    // Invoke the callback if the promise fails.
+                    deferred.promise.catch(function failed() {
+                        failedFunction.apply(this);
+                    }.bind(this));
 
                 }
 
