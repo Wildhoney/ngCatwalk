@@ -66,14 +66,22 @@
          */
         $scope.createCat = function createCat(name) {
 
-            catwalk.createModel('cat', { name: 'Mango' });
-
             // Create our cat model!
-            catwalk.createModel('cat', { name: name, friends: ['Splodge', 'Mango'] });
+            catwalk.createModel('cat', { name: name });
 
             // ...And reset the name property.
             $scope.catName = '';
 
+        };
+
+        /**
+         * @method hasFriend
+         * @param model {Object}
+         * @param name {String}
+         * @return {Boolean}
+         */
+        $scope.hasFriend = function hasFriend(model, name) {
+            return model.friends.hasModel(name);
         };
 
         /**

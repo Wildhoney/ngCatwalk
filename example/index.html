@@ -59,7 +59,7 @@
 
             <ul>
                 <li ng-repeat="friend in cats">
-                    <input type="checkbox" ng-click="addFriend(cat, friend.name)" />
+                    <input type="checkbox" ng-checked="hasFriend(cat, friend.name)" ng-click="addFriend(cat, friend.name)" />
                     {{friend.name}}
                 </li>
             </ul>
