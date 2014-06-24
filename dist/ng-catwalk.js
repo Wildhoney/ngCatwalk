@@ -4,12 +4,28 @@
     var _throwException = function _throwException( message ) {
         throw "ngCatwalk: " + message + ".";
     };
+    var injector = $angular.injector( [ 'ngCatwalk', 'ng' ] ),
+        $q = injector.get( '$q' );
     var ngCatwalkRelationship = {
-        _collections: {},
         hasMany: function hasMany( options ) {
-            var collection = this._collections[ options.collection ];
-            return function HasManyRelationship( model, property ) {
-                var values = [];
+            return function HasManyRelationship( model, property, dependencies ) {
+                var collection = this._collections[ options.collection ],
+                    promises = {},
+                    values = model[ property ] || [],
+                    createModel = this.createModel.bind( this ),
+                    $rootScope = dependencies.rootScope;
+                var difference = function difference( desired, got ) {
+                    var copy = [];
+                    $angular.forEach( desired, function forEach( model ) {
+                        copy.push( model );
+                    } );
+                    $angular.forEach( got, function forEach( model ) {
+                        var property = model[ options.foreignKey ],
+                            index = copy.indexOf( property );
+                        copy.splice( index, 1 );
+                    } );
+                    return copy;
+                };
                 Object.defineProperty( model, property, {
                     get: function get() {
                         collection.filterBy( options.foreignKey, values, function inArray( expected, actual ) {
@@ -17,6 +33,20 @@
                         } );
                         var models = collection._collection( Infinity );
                         collection.unfilterBy( options.foreignKey );
+                        $angular.forEach( difference( values, models ), function required( value ) {
+                            if ( typeof promises[ value ] !== 'undefined' ) {
+                                return;
+                            }
+                            var deferred = promises[ value ] = $q.defer();
+                            $rootScope.$broadcast( 'catwalk/read/' + options.collection, deferred, options.foreignKey, value );
+                            deferred.promise.then( function then( model ) {
+                                createModel( options.collection, model );
+                            } );
+                            deferred.promise.catch( function failure() {
+                                var index = values.indexOf( value );
+                                values.splice( index, 1 );
+                            } );
+                        } );
                         models._resolve = function _resolve( model ) {
                             if ( typeof model === 'object' ) {
                                 return model[ property ]
@@ -63,10 +93,7 @@
     };
     app.service( 'catwalk', [ '$rootScope', '$q', 'Crossfilter',
         function CatwalkService( $rootScope, $q, Crossfilter ) {
-            function Catwalk() {
-                this.relationship._collections = this._collections;
-                this.relationship.$rootScope = $rootScope;
-            }
+            function Catwalk() {}
             Catwalk.prototype = {
                 _primaryName: '__catwalkId__',
                 _primaryIndex: 0,
@@ -153,7 +180,9 @@
                                 model[ property ] = undefined;
                             }
                             if ( this._isRelationship( accessor ) ) {
-                                new accessor( model, property );
+                                accessor.call( this, model, property, {
+                                    rootScope: $rootScope
+                                } );
                                 continue;
                             }
                             model[ property ] = accessor( model[ property ] );
