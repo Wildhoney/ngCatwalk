@@ -116,13 +116,6 @@
                     }
                     return this._collections[ name ];
                 },
-                _awaitFeedback: function _awaitFeedback( type, name, model, failedFunction ) {
-                    var deferred = $q.defer();
-                    $rootScope.$broadcast( 'catwalk/' + type + '/' + name, deferred, model );
-                    deferred.promise.catch( function failed() {
-                        failedFunction.apply( this );
-                    }.bind( this ) );
-                },
                 createModel: function createModel( name, properties ) {
                     var model = this._prepareModel( name, properties );
                     model[ this._primaryName ] = ++this._primaryIndex;
@@ -196,6 +189,13 @@
                         }
                     }
                     return model;
+                },
+                _awaitFeedback: function _awaitFeedback( type, name, model, failedFunction ) {
+                    var deferred = $q.defer();
+                    $rootScope.$broadcast( 'catwalk/' + type + '/' + name, deferred, model );
+                    deferred.promise.catch( function failed() {
+                        failedFunction.apply( this );
+                    }.bind( this ) );
                 }
             };
             return new Catwalk();
