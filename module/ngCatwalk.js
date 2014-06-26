@@ -212,6 +212,34 @@
 
                     return deferred.promise;
 
+                },
+
+                /**
+                 * @method createHasManyRelationship
+                 * @param model {Object}
+                 * @param fromCollectionName {String}
+                 * @param fromProperty {String}
+                 * @param toCollectionName {String}
+                 * @param toProperty {String}
+                 * @param value {Array}
+                 * @return {Boolean}
+                 */
+                createHasManyRelationship: function createHasManyRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
+
+                },
+
+                /**
+                 * @method createHasOneRelationship
+                 * @param model {Object}
+                 * @param fromCollectionName {String}
+                 * @param fromProperty {String}
+                 * @param toCollectionName {String}
+                 * @param toProperty {String}
+                 * @param value {String|Number|Boolean}
+                 * @return {Boolean}
+                 */
+                createHasOneRelationship: function createHasOneRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
+
                 }
 
             };
