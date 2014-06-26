@@ -129,49 +129,80 @@
                  */
                 silently: function silently(processFunction) {
                     this._silent = true;
-                    processFunction();
+                    processFunction.apply(this);
                     this._silent = false;
                 },
 
                 /**
                  * @method createModel
-                 * @param collection {String}
+                 * @param collectionName {String}
                  * @param properties {Object}
                  * @return {Object}
                  */
-                createModel: function createModel(collection, properties) {
+                createModel: function createModel(collectionName, properties) {
+
+                },
+
+                /**
+                 * @method revertCreateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                revertCreateModel: function revertCreateModel(collectionName, model) {
 
                 },
 
                 /**
                  * @method updateModel
-                 * @param collection {String}
+                 * @param collectionName {String}
                  * @param model {Object}
                  * @param properties {Object}
                  * @return {Object}
                  */
-                updateModel: function updateModel(collection, model, properties) {
+                updateModel: function updateModel(collectionName, model, properties) {
+
+                },
+
+                /**
+                 * @method oldProperties
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param oldProperties {Object}
+                 * @return {Object}
+                 */
+                revertUpdateModel: function revertUpdateModel(collectionName, model, oldProperties) {
 
                 },
 
                 /**
                  * @method deleteModel
-                 * @param collection {String}
+                 * @param collectionName {String}
                  * @param model {Object}
                  * @return {Object}
                  */
-                deleteModel: function deleteModel(collection, model) {
+                deleteModel: function deleteModel(collectionName, model) {
+
+                },
+
+                /**
+                 * @method revertDeleteModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                revertDeleteModel: function revertDeleteModel(collectionName, model) {
 
                 },
 
                 /**
                  * @method createPromise
-                 * @param collection {String}
+                 * @param collectionName {String}
                  * @param type {String}
                  * @param args {String|Boolean|Number|Object|Array}
                  * @return {$q.promise}
                  */
-                createPromise: function createPromise(collection, type, args) {
+                createPromise: function createPromise(collectionName, type, args) {
 
                     var deferred = $q.defer();
 
