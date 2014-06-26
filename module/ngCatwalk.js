@@ -16,6 +16,22 @@
     };
 
     /**
+     * @property ngCatwalkAttribute
+     * @type {Object}
+     */
+    var ngCatwalkAttribute = {
+
+    };
+
+    /**
+     * @property ngCatwalkRelationship
+     * @type {Object}
+     */
+    var ngCatwalkRelationship = {
+
+    };
+
+    /**
      * @module ngCatwalk
      * @author Adam Timberlake
      * @link https://github.com/Wildhoney/ngCatwalk
@@ -44,6 +60,18 @@
              * @type {Object}
              */
             Catwalk.prototype = {
+
+                /**
+                 * @property attribute
+                 * @type ngCatwalkAttribute
+                 */
+                attribute: ngCatwalkAttribute,
+
+                /**
+                 * @property relationship
+                 * @type ngCatwalkRelationship
+                 */
+                relationship: ngCatwalkRelationship,
 
                 /**
                  * @property _primaryName
