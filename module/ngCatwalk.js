@@ -24,11 +24,13 @@
 
         /**
          * @method CatwalkService
-         * @param $rootScope
-         * @param Crossfilter
+         * @param $rootScope {Object}
+         * @param $interpolate {Function}
+         * @param $q {Object}
+         * @param Crossfilter {Function}
          * @return {Object}
          */
-        function CatwalkService($rootScope, $q, Crossfilter) {
+        function CatwalkService($rootScope, $q, $interpolate, Crossfilter) {
 
             /**
              * @module ngCatwalk
@@ -55,6 +57,12 @@
                  * @default 0
                  */
                 _primaryIndex: 0,
+
+                /**
+                 * @property _eventName
+                 * @type {String}
+                 */
+                _eventName: 'catwalk/{{type}}/{{collection}}',
 
                 /**
                  * @property _collections
@@ -117,11 +125,12 @@
 
                 /**
                  * @method updateModel
+                 * @param collection {String}
                  * @param model {Object}
                  * @param properties {Object}
                  * @return {Object}
                  */
-                updateModel: function updateModel(model, properties) {
+                updateModel: function updateModel(collection, model, properties) {
 
                 },
 
@@ -137,13 +146,19 @@
 
                 /**
                  * @method createPromise
+                 * @param collection {String}
                  * @param type {String}
                  * @param args {String|Boolean|Number|Object|Array}
                  * @return {$q.promise}
                  */
-                createPromise: function createPromise(type, args) {
+                createPromise: function createPromise(collection, type, args) {
 
                     var deferred = $q.defer();
+
+                    // Create and broadcast the event.
+                    var eventName = $interpolate(this._eventName)({ type: type, collection: collection });
+                    $rootScope.$broadcast(eventName, arguments);
+
                     return deferred.promise;
 
                 }
