@@ -59,6 +59,12 @@
                 _primaryIndex: 0,
 
                 /**
+                 * @property _silent
+                 * @type {Boolean}
+                 */
+                _silent: false,
+
+                /**
                  * @property _eventName
                  * @type {String}
                  */
@@ -111,6 +117,20 @@
                     // Otherwise we'll retrieve the collection.
                     return this._collections[name];
 
+                },
+
+                /**
+                 * Invokes a CRUD method which normally emits an event. However, when wrapped in the
+                 * silently method, the CRUD method behaves as normal, minus the emitting of the event.
+                 *
+                 * @method silently
+                 * @param processFunction {Function}
+                 * @return {void}
+                 */
+                silently: function silently(processFunction) {
+                    this._silent = true;
+                    processFunction();
+                    this._silent = false;
                 },
 
                 /**
