@@ -134,7 +134,7 @@
                  * @property _primaryName
                  * @type {String}
                  */
-                _primaryName: '__catwalkId__',
+                _primaryName: '_catwalkId',
 
                 /**
                  * @property _silent
