@@ -22,37 +22,58 @@
     var ngCatwalkAttribute = {
 
         /**
-         * @method generic
+         * @method any
+         * @property defaultValue {Object|Array|Number|Boolean|Date|String|RegExp}
          * @return {Function}
          */
-        generic: function generic() {
+        any: function any(defaultValue) {
 
             return function(value) {
-                return value;
+
+                if (value === null) {
+                    return null;
+                }
+
+                return typeof value !== 'undefined' ? value : defaultValue;
+
             };
 
         },
 
         /**
          * @method number
+         * @param defaultValue {Number}
          * @returns {Function}
          */
-        number: function number() {
+        number: function number(defaultValue) {
 
             return function(value) {
-                return +value;
+
+                if (value === null) {
+                    return null;
+                }
+
+                return typeof value !== 'undefined' ? +value : defaultValue;
+
             };
 
         },
 
         /**
          * @method string
+         * @property defaultValue {String}
          * @returns {Function}
          */
-        string: function string() {
+        string: function string(defaultValue) {
 
             return function(value) {
-                return String(value);
+
+                if (value === null) {
+                    return null;
+                }
+
+                return typeof value !== 'undefined' ? String(value) : defaultValue;
+
             };
 
         }
@@ -265,8 +286,9 @@
                                 return;
                             }
 
-                            // Create the property on the model.
-                            model[property] = null;
+                            // Create the property on the model, and typecast it.
+                            var typecast    = blueprint[property];
+                            model[property] = typecast(null);
 
                         });
 
