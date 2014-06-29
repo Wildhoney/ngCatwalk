@@ -67,13 +67,26 @@
                     model = this.cleanModel( collectionName, model );
                     this.collection( collectionName ).addModel( model );
                     var promise = this.createPromise( collectionName, 'create', [ model ] );
+                    promise.then( function andThen( properties ) {
+                        this.resolveCreateModel( collectionName, model, properties );
+                    }.bind( this ) );
                     promise.catch( function andCatch() {
-                        this.revertCreateModel( collectionName, model );
+                        this.rejectCreateModel( collectionName, model );
                     }.bind( this ) );
                     return model;
                 },
-                revertCreateModel: function revertCreateModel( collectionName, model ) {
+                rejectCreateModel: function rejectCreateModel( collectionName, model ) {
                     this.collection( collectionName ).deleteModel( model );
+                },
+                resolveCreateModel: function resolveCreateModel( collectionName, model, properties ) {
+                    var blueprint = this.collection( collectionName ).blueprint;
+                    this._propertyIterator( properties, function iterator( property ) {
+                        var typecast = blueprint[ property ];
+                        if ( typeof typecast === 'undefined' ) {
+                            return;
+                        }
+                        model[ property ] = typecast( properties[ property ] );
+                    } );
                 },
                 updateModel: function updateModel( collectionName, model, properties ) {},
                 revertUpdateModel: function revertUpdateModel( collectionName, model, oldProperties ) {},
@@ -123,7 +136,7 @@
                             iteratorFunction( property );
                         }
                     }
-                },
+                }
             };
             return new Catwalk();
         }
