@@ -24,7 +24,7 @@
         string: function string( defaultValue ) {
             return function ( value ) {
                 if ( value === null ) {
-                    return null;
+                    return defaultValue || null;
                 }
                 return typeof value !== 'undefined' ? String( value ) : defaultValue;
             };
@@ -38,7 +38,6 @@
                 attribute: ngCatwalkAttribute,
                 relationship: ngCatwalkRelationship,
                 _primaryName: '__catwalkId__',
-                _primaryIndex: 0,
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
                 _collections: {},
@@ -50,6 +49,7 @@
                         properties[ this._primaryName ] = this.attribute.number();
                         this._collections[ name ].primaryKey( this._primaryName );
                         this._collections[ name ].blueprint = properties;
+                        this._collections[ name ].index = 0;
                         for ( var property in properties ) {
                             if ( properties.hasOwnProperty( property ) ) {
                                 this._collections[ name ].addDimension( property );
@@ -67,48 +67,14 @@
                     model = this.cleanModel( collectionName, model );
                     this.collection( collectionName ).addModel( model );
                     var promise = this.createPromise( collectionName, 'create', [ model ] );
-                    promise.catch( function andCatch() {} );
+                    promise.catch( function andCatch() {
+                        this.revertCreateModel( collectionName, model );
+                    }.bind( this ) );
                     return model;
                 },
-                cleanModel: function cleanModel( collectionName, model ) {
-                    var blueprint = this.collection( collectionName ).blueprint,
-                        iterator = this._propertyIterator,
-                        primaryKey = this._primaryName;
-                    ( function removeProperties() {
-                        iterator( model, function iterator( property ) {
-                            if ( !blueprint.hasOwnProperty( property ) ) {
-                                delete model[ property ];
-                            }
-                        } );
-                    } )();
-                    ( function addProperties() {
-                        iterator( blueprint, function iterator( property ) {
-                            if ( typeof model[ property ] !== 'undefined' || property === primaryKey ) {
-                                return;
-                            }
-                            var typecast = blueprint[ property ];
-                            model[ property ] = typecast( null );
-                        } );
-                    } )();
-                    ( function typecastProperties() {
-                        iterator( blueprint, function iterator( property ) {
-                            if ( model[ property ] === null ) {
-                                return;
-                            }
-                            var typecast = blueprint[ property ];
-                            model[ property ] = typecast( model[ property ] );
-                        } );
-                    } )();
-                    return model;
+                revertCreateModel: function revertCreateModel( collectionName, model ) {
+                    this.collection( collectionName ).deleteModel( model );
                 },
-                _propertyIterator: function _propertyIterator( model, iteratorFunction ) {
-                    for ( var property in model ) {
-                        if ( model.hasOwnProperty( property ) ) {
-                            iteratorFunction( property );
-                        }
-                    }
-                },
-                revertCreateModel: function revertCreateModel( collectionName, model ) {},
                 updateModel: function updateModel( collectionName, model, properties ) {},
                 revertUpdateModel: function revertUpdateModel( collectionName, model, oldProperties ) {},
                 deleteModel: function deleteModel( collectionName, model ) {},
@@ -123,11 +89,41 @@
                         type: type,
                         collection: collectionName
                     } );
-                    $rootScope.$broadcast.call( this, eventName, args );
+                    $rootScope.$broadcast( eventName, args[ 0 ], args[ 1 ], args[ 2 ] );
                     return deferred.promise;
                 },
                 createHasManyRelationship: function createHasManyRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
-                createHasOneRelationship: function createHasOneRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {}
+                createHasOneRelationship: function createHasOneRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
+                cleanModel: function cleanModel( collectionName, model ) {
+                    var blueprint = this.collection( collectionName ).blueprint,
+                        iterator = this._propertyIterator,
+                        primaryKey = this._primaryName;
+                    model[ primaryKey ] = ++this.collection( collectionName ).index;
+                    ( function removeProperties() {
+                        iterator( model, function iterator( property ) {
+                            if ( !blueprint.hasOwnProperty( property ) ) {
+                                delete model[ property ];
+                            }
+                        } );
+                    } )();
+                    ( function addAndTypecastProperties() {
+                        iterator( blueprint, function iterator( property ) {
+                            var typecast = blueprint[ property ];
+                            if ( typeof model[ property ] === 'undefined' && property !== primaryKey ) {
+                                model[ property ] = null;
+                            }
+                            model[ property ] = typecast( model[ property ] );
+                        } );
+                    } )();
+                    return model;
+                },
+                _propertyIterator: function _propertyIterator( model, iteratorFunction ) {
+                    for ( var property in model ) {
+                        if ( model.hasOwnProperty( property ) ) {
+                            iteratorFunction( property );
+                        }
+                    }
+                },
             };
             return new Catwalk();
         }
