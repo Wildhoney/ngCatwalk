@@ -21,6 +21,23 @@
      */
     var ngCatwalkAttribute = {
 
+        /**
+         * @method generic
+         * @return {Number|String|Object|Array|Boolean}
+         */
+        generic: function generic(value) {
+            return value;
+        },
+
+        /**
+         * @method number
+         * @param value {Number|String|Object|Array|Boolean}
+         * @returns {Number}
+         */
+        number: function number(value) {
+            return +value;
+        }
+
     };
 
     /**
@@ -36,7 +53,7 @@
      * @author Adam Timberlake
      * @link https://github.com/Wildhoney/ngCatwalk
      */
-    app.service('catwalk', ['$rootScope', '$q', 'Crossfilter',
+    app.service('catwalk', ['$rootScope', '$q', '$interpolate', 'Crossfilter',
 
         /**
          * @method CatwalkService
@@ -169,6 +186,15 @@
                  */
                 createModel: function createModel(collectionName, properties) {
 
+                    var model   = this.collection(collectionName).createModel(properties),
+                        promise = this.createPromise(collectionName, 'create', [model]);
+
+                    promise.catch(function andCatch() {
+
+                    });
+
+                    return model;
+
                 },
 
                 /**
@@ -227,16 +253,26 @@
                  * @method createPromise
                  * @param collectionName {String}
                  * @param type {String}
-                 * @param args {String|Boolean|Number|Object|Array}
+                 * @param args {Array}
                  * @return {$q.promise}
                  */
                 createPromise: function createPromise(collectionName, type, args) {
 
                     var deferred = $q.defer();
 
+                    if (!Array.isArray(args)) {
+
+                        // Ensure the `args` variable is an array.
+                        args = args ? [args] : [];
+
+                    }
+
+                    // Attach the promise for the developer to resolve or reject.
+                    args.unshift(deferred);
+
                     // Create and broadcast the event.
-                    var eventName = $interpolate(this._eventName)({ type: type, collection: collection });
-                    $rootScope.$broadcast(eventName, arguments);
+                    var eventName = $interpolate(this._eventName)({ type: type, collection: collectionName });
+                    $rootScope.$broadcast.call(this, eventName, args);
 
                     return deferred.promise;
 

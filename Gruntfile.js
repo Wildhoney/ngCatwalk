@@ -69,24 +69,24 @@ module.exports = function(grunt) {
             }
         },
 
-//        /**
-//         * @property jasmine
-//         * @type {Object}
-//         */
-//        jasmine: {
-//            pivotal: {
-//                src: 'module/ngCatwalk.js',
-//                options: {
-//                    specs: 'tests/spec.js',
-//                    helpers: [
-//                        'example/js/vendor/angular/angular.js',
-//                        'example/js/vendor/moment/moment.js',
-//                        'example/js/vendor/catwalk/catwalk.js',
-//                        'example/js/vendor/angular-mocks/angular-mocks.js'
-//                    ]
-//                }
-//            }
-//        },
+        /**
+         * @property jasmine
+         * @type {Object}
+         */
+        jasmine: {
+            pivotal: {
+                src: 'module/ngCatwalk.js',
+                options: {
+                    specs: 'tests/spec.js',
+                    helpers: [
+                        'example/js/vendor/angular/angular.js',
+                        'example/js/vendor/angular-mocks/angular-mocks.js',
+                        'example/js/vendor/crossfilter/crossfilter.js',
+                        'example/js/vendor/ng-crossfilter/dist/ng-crossfilter.js'
+                    ]
+                }
+            }
+        },
 
         /**
          * @property comments
@@ -122,7 +122,7 @@ module.exports = function(grunt) {
 
     });
 
-//    grunt.loadNpmTasks('grunt-contrib-jasmine');
+    grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-copy');
@@ -131,7 +131,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-jsbeautifier');
 
     grunt.registerTask('build', ['copy', 'uglify', 'compress', 'comments', 'jsbeautifier']);
-    grunt.registerTask('test', ['jshint']);
+//    grunt.registerTask('test', ['jshint', 'jasmine']);
+    grunt.registerTask('test', ['jasmine']);
     grunt.registerTask('default', ['jshint', 'compress', 'copy', 'uglify', 'comments', 'jsbeautifier']);
 
 };
