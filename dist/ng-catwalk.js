@@ -5,11 +5,20 @@
         throw "ngCatwalk: " + message + ".";
     };
     var ngCatwalkAttribute = {
-        generic: function generic( value ) {
-            return value;
+        generic: function generic() {
+            return function ( value ) {
+                return value;
+            };
         },
-        number: function number( value ) {
-            return +value;
+        number: function number() {
+            return function ( value ) {
+                return +value;
+            };
+        },
+        string: function string() {
+            return function ( value ) {
+                return String( value );
+            };
         }
     };
     var ngCatwalkRelationship = {};
@@ -45,11 +54,41 @@
                     processFunction.apply( this );
                     this._silent = false;
                 },
-                createModel: function createModel( collectionName, properties ) {
-                    var model = this.collection( collectionName ).createModel( properties ),
-                        promise = this.createPromise( collectionName, 'create', [ model ] );
+                createModel: function createModel( collectionName, model ) {
+                    model = this.cleanModel( collectionName, model );
+                    this.collection( collectionName ).addModel( model );
+                    var promise = this.createPromise( collectionName, 'create', [ model ] );
                     promise.catch( function andCatch() {} );
                     return model;
+                },
+                cleanModel: function cleanModel( collectionName, model ) {
+                    var blueprint = this.collection( collectionName ).blueprint,
+                        iterator = this._propertyIterator,
+                        primaryKey = this._primaryName;
+                    ( function removeProperties() {
+                        iterator( model, function iterator( property ) {
+                            if ( !blueprint.hasOwnProperty( property ) ) {
+                                delete model[ property ];
+                            }
+                        } );
+                    }() );
+                    ( function addProperties() {
+                        iterator( blueprint, function iterator( property ) {
+                            if ( typeof model[ property ] !== 'undefined' || property === primaryKey ) {
+                                return;
+                            }
+                            var typecast = blueprint[ property ];
+                            model[ property ] = typecast( '' );
+                        } );
+                    } )();
+                    return model;
+                },
+                _propertyIterator: function _propertyIterator( model, iteratorFunction ) {
+                    for ( var property in model ) {
+                        if ( model.hasOwnProperty( property ) ) {
+                            iteratorFunction( property );
+                        }
+                    }
                 },
                 revertCreateModel: function revertCreateModel( collectionName, model ) {},
                 updateModel: function updateModel( collectionName, model, properties ) {},
