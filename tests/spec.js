@@ -119,6 +119,33 @@ describe('ngCatwalk', function() {
 
         }));
 
+        it('Should be able to resolve the creation of a model with additional properties;', inject(function($rootScope, catwalk) {
+
+            catwalk.collection('team', {
+                name:         catwalk.attribute.any(),
+                colour:       catwalk.attribute.string('none'),
+                worldCupWins: catwalk.attribute.number()
+            });
+
+            spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                deferred.resolve({
+                    colour: 'Blue'
+                });
+            });
+
+            var model = catwalk.createModel('team', {
+                name:   'Netherlands',
+                colour: 'Orange'
+            });
+
+            $rootScope.$digest();
+
+            expect($rootScope.$broadcast).toHaveBeenCalled();
+            expect(catwalk.collection('team').length).toEqual(1);
+            expect(model.colour).toEqual('Blue');
+
+        }));
+
     });
 
 });

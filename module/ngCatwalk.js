@@ -227,9 +227,14 @@
                     this.collection(collectionName).addModel(model);
                     var promise = this.createPromise(collectionName, 'create', [model]);
 
-                    // Our callbacks for the outcome of the promise.
+                    // When the promise has been resolved.
+                    promise.then(function andThen(properties) {
+                        this.resolveCreateModel(collectionName, model, properties);
+                    }.bind(this));
+                    
+                    // When the promise has been rejected.
                     promise.catch(function andCatch() {
-                        this.revertCreateModel(collectionName, model);
+                        this.rejectCreateModel(collectionName, model);
                     }.bind(this));
 
                     return model;
@@ -237,13 +242,42 @@
                 },
 
                 /**
-                 * @method revertCreateModel
+                 * @method rejectCreateModel
                  * @param collectionName {String}
                  * @param model {Object}
-                 * @return {Object}
+                 * @return {void}
                  */
-                revertCreateModel: function revertCreateModel(collectionName, model) {
+                rejectCreateModel: function rejectCreateModel(collectionName, model) {
                     this.collection(collectionName).deleteModel(model);
+                },
+
+                /**
+                 * @method resolveCreateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param properties {Object}
+                 * @return {void}
+                 */
+                resolveCreateModel: function resolveCreateModel(collectionName, model, properties) {
+
+                    var blueprint = this.collection(collectionName).blueprint;
+
+                    this._propertyIterator(properties, function iterator(property) {
+
+                        var typecast = blueprint[property];
+
+                        // Don't add properties to the model if it hasn't been defined in
+                        // the blueprint.
+                        if (typeof typecast === 'undefined') {
+                            return;
+                        }
+
+                        // Overwrite the value with the one specified in the resolution of
+                        // the related promise.
+                        model[property] = typecast(properties[property]);
+
+                    });
+
                 },
 
                 /**
@@ -423,7 +457,7 @@
 
                     }
 
-                },
+                }
 
             };
 
