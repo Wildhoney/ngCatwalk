@@ -20,7 +20,7 @@ describe('ngCatwalk', function() {
             var stringAttribute = catwalk.attribute.string('Adam');
             expect(stringAttribute()).toEqual('Adam');
             expect(stringAttribute('Bob')).toEqual('Bob');
-            expect(stringAttribute(null)).toBe(null);
+            expect(stringAttribute(null)).toBe('Adam');
 
             var numberAttribute = catwalk.attribute.number(5);
             expect(numberAttribute()).toEqual(5);
@@ -71,7 +71,7 @@ describe('ngCatwalk', function() {
 
             catwalk.collection('team', {
                 name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string('none'),
+                colour:       catwalk.attribute.string(),
                 worldCupWins: catwalk.attribute.number()
             });
 
@@ -95,6 +95,13 @@ describe('ngCatwalk', function() {
                 colour:       catwalk.attribute.string('none'),
                 worldCupWins: catwalk.attribute.number()
             });
+
+            var model = catwalk.createModel('team', {
+                name: 'Netherlands',
+                manager: 'Louis van Gaal'
+            });
+
+            expect(model.colour).toEqual('none');
 
         }));
 

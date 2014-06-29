@@ -69,7 +69,7 @@
             return function(value) {
 
                 if (value === null) {
-                    return null;
+                    return defaultValue || null;
                 }
 
                 return typeof value !== 'undefined' ? String(value) : defaultValue;
@@ -274,37 +274,24 @@
                     })();
 
                     /**
-                     * @method addProperties
+                     * @method addAndTypecastProperties
                      * @return {void}
                      */
-                    (function addProperties() {
+                    (function addAndTypecastProperties() {
 
                         iterator(blueprint, function iterator(property) {
+
+                            var typecast = blueprint[property];
 
                             // Ignore if it's already been defined, or it's the primary key.
-                            if (typeof model[property] !== 'undefined' || property === primaryKey) {
-                                return;
-                            }
+                            if (typeof model[property] === 'undefined' && property !== primaryKey) {
 
-                            // Create the property on the model, and typecast it.
-                            var typecast    = blueprint[property];
-                            model[property] = typecast(null);
+                                // Create the property on the model, and typecast it.
+                                model[property] = null;
 
-                        });
-
-                    })();
-
-                    (function typecastProperties() {
-
-                        iterator(blueprint, function iterator(property) {
-
-                            // Ignore if it's a NULL property.
-                            if (model[property] === null) {
-                                return;
                             }
 
                             // Typecast each property accordingly.
-                            var typecast    = blueprint[property];
                             model[property] = typecast(model[property]);
 
                         });
