@@ -250,7 +250,7 @@
 
                         });
 
-                    }());
+                    })();
 
                     /**
                      * @method addProperties
@@ -287,7 +287,7 @@
 
                         });
 
-                    }());
+                    })();
 
                     return model;
 
