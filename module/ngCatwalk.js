@@ -292,13 +292,23 @@
                 },
 
                 /**
-                 * @method oldProperties
+                 * @method resolveUpdateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
+
+                },
+
+                /**
+                 * @method rejectUpdateModel
                  * @param collectionName {String}
                  * @param model {Object}
                  * @param oldProperties {Object}
                  * @return {Object}
                  */
-                revertUpdateModel: function revertUpdateModel(collectionName, model, oldProperties) {
+                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
 
                 },
 
@@ -313,12 +323,22 @@
                 },
 
                 /**
-                 * @method revertDeleteModel
+                 * @method resolveDeleteModel
                  * @param collectionName {String}
                  * @param model {Object}
                  * @return {Object}
                  */
-                revertDeleteModel: function revertDeleteModel(collectionName, model) {
+                resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
+
+                },
+
+                /**
+                 * @method rejectDeleteModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                rejectDeleteModel: function rejectDeleteModel(collectionName, model) {
 
                 },
 
