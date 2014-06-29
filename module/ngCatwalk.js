@@ -248,7 +248,11 @@
                  * @return {void}
                  */
                 rejectCreateModel: function rejectCreateModel(collectionName, model) {
-                    this.collection(collectionName).deleteModel(model);
+
+                    this.silently(function silentlyDelete() {
+                        this.collection(collectionName).deleteModel(model);
+                    });
+
                 },
 
                 /**
