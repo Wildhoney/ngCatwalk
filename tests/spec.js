@@ -9,7 +9,8 @@ describe('ngCatwalk', function() {
         inject(function($injector, catwalk) {
 
             catwalk.collection('team', {
-                name: catwalk.attribute.generic()
+                name: catwalk.attribute.generic(),
+                colour: catwalk.attribute.string()
             });
 
             // Accessible by the tests themselves.
@@ -29,6 +30,19 @@ describe('ngCatwalk', function() {
             expect(typeof $catwalk._collections.team).toEqual('object');
             expect(typeof $catwalk.collection('team')).toEqual('object');
         });
+
+        it('Should be able to create a model;', function() {
+
+            var model = $catwalk.createModel('team', {
+                name: 'Netherlands',
+                manager: 'Louis van Gaal'
+            });
+
+            expect(model.name).toBe('Netherlands');
+            expect(model.colour).toBe('');
+            expect(model.manager).toBeUndefined();
+
+        })
 
     });
 

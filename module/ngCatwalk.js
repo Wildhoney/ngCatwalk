@@ -23,19 +23,38 @@
 
         /**
          * @method generic
-         * @return {Number|String|Object|Array|Boolean}
+         * @return {Function}
          */
-        generic: function generic(value) {
-            return value;
+        generic: function generic() {
+
+            return function(value) {
+                return value;
+            };
+
         },
 
         /**
          * @method number
-         * @param value {Number|String|Object|Array|Boolean}
-         * @returns {Number}
+         * @returns {Function}
          */
-        number: function number(value) {
-            return +value;
+        number: function number() {
+
+            return function(value) {
+                return +value;
+            };
+
+        },
+
+        /**
+         * @method string
+         * @returns {Function}
+         */
+        string: function string() {
+
+            return function(value) {
+                return String(value);
+            };
+
         }
 
     };
@@ -181,19 +200,97 @@
                 /**
                  * @method createModel
                  * @param collectionName {String}
-                 * @param properties {Object}
+                 * @param model {Object}
                  * @return {Object}
                  */
-                createModel: function createModel(collectionName, properties) {
+                createModel: function createModel(collectionName, model) {
 
-                    var model   = this.collection(collectionName).createModel(properties),
-                        promise = this.createPromise(collectionName, 'create', [model]);
+                    // Ensure the model conforms with the collection blueprint.
+                    model = this.cleanModel(collectionName, model);
+
+                    // Add the model to the collection and generate the promise.
+                    this.collection(collectionName).addModel(model);
+                    var promise = this.createPromise(collectionName, 'create', [model]);
 
                     promise.catch(function andCatch() {
 
                     });
 
                     return model;
+
+                },
+
+                /**
+                 * Responsible for cleaning a model based on the collection's blueprint.
+                 *
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                cleanModel: function cleanModel(collectionName, model) {
+
+                    var blueprint  = this.collection(collectionName).blueprint,
+                        iterator   = this._propertyIterator,
+                        primaryKey = this._primaryName;
+
+                    /**
+                     * @method removeProperties
+                     * @return {void}
+                     */
+                    (function removeProperties() {
+
+                        iterator(model, function iterator(property) {
+
+                            if (!blueprint.hasOwnProperty(property)) {
+
+                                // Remove the property if it's not in the blueprint.
+                                delete model[property];
+
+                            }
+
+                        });
+
+                    }());
+
+                    /**
+                     * @method addProperties
+                     * @return {void}
+                     */
+                    (function addProperties() {
+
+                        iterator(blueprint, function iterator(property) {
+
+                            // Ignore if it's already been defined, or it's the primary key.
+                            if (typeof model[property] !== 'undefined' || property === primaryKey) {
+                                return;
+                            }
+
+                            // Create the property on the model, and typecast it accordingly.
+                            var typecast    = blueprint[property];
+                            model[property] = typecast('');
+
+                        });
+
+                    })();
+
+                    return model;
+
+                },
+
+                /**
+                 * @method _propertyIterator
+                 *
+                 * @private
+                 */
+                _propertyIterator: function _propertyIterator(model, iteratorFunction) {
+
+                    for (var property in model) {
+
+                        if (model.hasOwnProperty(property)) {
+                            iteratorFunction(property);
+                        }
+
+                    }
 
                 },
 
