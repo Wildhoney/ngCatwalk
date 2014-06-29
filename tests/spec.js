@@ -1,17 +1,6 @@
 describe('ngCatwalk', function() {
 
-    var $rootScope, catwalk;
-
     beforeEach(module('ngCatwalk', 'ngCrossfilter'));
-
-    beforeEach(function() {
-
-        inject(function($injector) {
-            $rootScope = $injector.get('$rootScope');
-            spyOn($rootScope, '$broadcast');
-        });
-
-    });
 
     describe('Typecasting', function() {
 
@@ -76,11 +65,12 @@ describe('ngCatwalk', function() {
             });
 
             var model = catwalk.createModel('team', {
-                name: 'Netherlands',
+                name:         'Netherlands',
                 worldCupWins: '0',
-                manager: 'Louis van Gaal'
+                manager:      'Louis van Gaal'
             });
 
+            expect(model[catwalk._primaryName]).toBe(1);
             expect(model.name).toBe('Netherlands');
             expect(model.worldCupWins).toBe(0);
             expect(model.colour).toBeNull();
@@ -97,11 +87,35 @@ describe('ngCatwalk', function() {
             });
 
             var model = catwalk.createModel('team', {
-                name: 'Netherlands',
+                name:    'Netherlands',
                 manager: 'Louis van Gaal'
             });
 
             expect(model.colour).toEqual('none');
+
+        }));
+
+        it('Should be able to reject the creation of a model;', inject(function($rootScope, catwalk) {
+
+            catwalk.collection('team', {
+                name:         catwalk.attribute.any(),
+                colour:       catwalk.attribute.string('none'),
+                worldCupWins: catwalk.attribute.number()
+            });
+
+            spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                deferred.reject();
+            });
+
+            catwalk.createModel('team', {
+                name:   'Netherlands',
+                colour: 'Orange'
+            });
+
+            $rootScope.$digest();
+
+            expect($rootScope.$broadcast).toHaveBeenCalled();
+            expect(catwalk.collection('team').length).toEqual(0);
 
         }));
 

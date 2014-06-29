@@ -137,13 +137,6 @@
                 _primaryName: '__catwalkId__',
 
                 /**
-                 * @property _primaryIndex
-                 * @type {Number}
-                 * @default 0
-                 */
-                _primaryIndex: 0,
-
-                /**
                  * @property _silent
                  * @type {Boolean}
                  */
@@ -185,6 +178,7 @@
                         // Create the collection if we've defined the properties;
                         this._collections[name].primaryKey(this._primaryName);
                         this._collections[name].blueprint = properties;
+                        this._collections[name].index     = 0;
 
                         for (var property in properties) {
 
@@ -233,89 +227,12 @@
                     this.collection(collectionName).addModel(model);
                     var promise = this.createPromise(collectionName, 'create', [model]);
 
+                    // Our callbacks for the outcome of the promise.
                     promise.catch(function andCatch() {
-
-                    });
-
-                    return model;
-
-                },
-
-                /**
-                 * Responsible for cleaning a model based on the collection's blueprint.
-                 *
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @return {Object}
-                 */
-                cleanModel: function cleanModel(collectionName, model) {
-
-                    var blueprint  = this.collection(collectionName).blueprint,
-                        iterator   = this._propertyIterator,
-                        primaryKey = this._primaryName;
-
-                    /**
-                     * @method removeProperties
-                     * @return {void}
-                     */
-                    (function removeProperties() {
-
-                        iterator(model, function iterator(property) {
-
-                            if (!blueprint.hasOwnProperty(property)) {
-
-                                // Remove the property if it's not in the blueprint.
-                                delete model[property];
-
-                            }
-
-                        });
-
-                    })();
-
-                    /**
-                     * @method addAndTypecastProperties
-                     * @return {void}
-                     */
-                    (function addAndTypecastProperties() {
-
-                        iterator(blueprint, function iterator(property) {
-
-                            var typecast = blueprint[property];
-
-                            // Ignore if it's already been defined, or it's the primary key.
-                            if (typeof model[property] === 'undefined' && property !== primaryKey) {
-
-                                // Create the property on the model, and typecast it.
-                                model[property] = null;
-
-                            }
-
-                            // Typecast each property accordingly.
-                            model[property] = typecast(model[property]);
-
-                        });
-
-                    })();
+                        this.revertCreateModel(collectionName, model);
+                    }.bind(this));
 
                     return model;
-
-                },
-
-                /**
-                 * @method _propertyIterator
-                 *
-                 * @private
-                 */
-                _propertyIterator: function _propertyIterator(model, iteratorFunction) {
-
-                    for (var property in model) {
-
-                        if (model.hasOwnProperty(property)) {
-                            iteratorFunction(property);
-                        }
-
-                    }
 
                 },
 
@@ -326,7 +243,7 @@
                  * @return {Object}
                  */
                 revertCreateModel: function revertCreateModel(collectionName, model) {
-
+                    this.collection(collectionName).deleteModel(model);
                 },
 
                 /**
@@ -394,8 +311,7 @@
 
                     // Create and broadcast the event.
                     var eventName = $interpolate(this._eventName)({ type: type, collection: collectionName });
-                    $rootScope.$broadcast.call(this, eventName, args);
-
+                    $rootScope.$broadcast(eventName, args[0], args[1], args[2]);
                     return deferred.promise;
 
                 },
@@ -426,7 +342,88 @@
                  */
                 createHasOneRelationship: function createHasOneRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
 
-                }
+                },
+
+                /**
+                 * Responsible for cleaning a model based on the collection's blueprint.
+                 *
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                cleanModel: function cleanModel(collectionName, model) {
+
+                    var blueprint  = this.collection(collectionName).blueprint,
+                        iterator   = this._propertyIterator,
+                        primaryKey = this._primaryName;
+
+                    // Add the primary key to the model.
+                    model[primaryKey] = ++this.collection(collectionName).index;
+
+                    /**
+                     * @method removeProperties
+                     * @return {void}
+                     */
+                    (function removeProperties() {
+
+                        iterator(model, function iterator(property) {
+
+                            if (!blueprint.hasOwnProperty(property)) {
+
+                                // Remove the property if it's not in the blueprint.
+                                delete model[property];
+
+                            }
+
+                        });
+
+                    })();
+
+                    /**
+                     * @method addAndTypecastProperties
+                     * @return {void}
+                     */
+                    (function addAndTypecastProperties() {
+
+                        iterator(blueprint, function iterator(property) {
+
+                            var typecast = blueprint[property];
+
+                            // Ignore if it's already been defined, or it's the primary key.
+                            if (typeof model[property] === 'undefined' && property !== primaryKey) {
+
+                                // Create the property on the model, and typecast it.
+                                model[property] = null;
+
+                            }
+
+                            // Typecast each property accordingly.
+                            model[property] = typecast(model[property]);
+
+                        });
+
+                    })();
+
+                    return model;
+
+                },
+
+                /**
+                 * @method _propertyIterator
+                 *
+                 * @private
+                 */
+                _propertyIterator: function _propertyIterator(model, iteratorFunction) {
+
+                    for (var property in model) {
+
+                        if (model.hasOwnProperty(property)) {
+                            iteratorFunction(property);
+                        }
+
+                    }
+
+                },
 
             };
 
