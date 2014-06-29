@@ -265,13 +265,29 @@
                                 return;
                             }
 
-                            // Create the property on the model, and typecast it accordingly.
-                            var typecast    = blueprint[property];
-                            model[property] = typecast('');
+                            // Create the property on the model.
+                            model[property] = null;
 
                         });
 
                     })();
+
+                    (function typecastProperties() {
+
+                        iterator(blueprint, function iterator(property) {
+
+                            // Ignore if it's a NULL property.
+                            if (model[property] === null) {
+                                return;
+                            }
+
+                            // Typecast each property accordingly.
+                            var typecast    = blueprint[property];
+                            model[property] = typecast(model[property]);
+
+                        });
+
+                    }());
 
                     return model;
 

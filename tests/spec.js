@@ -10,7 +10,8 @@ describe('ngCatwalk', function() {
 
             catwalk.collection('team', {
                 name: catwalk.attribute.generic(),
-                colour: catwalk.attribute.string()
+                colour: catwalk.attribute.string(),
+                worldCupWins: catwalk.attribute.number()
             });
 
             // Accessible by the tests themselves.
@@ -35,11 +36,13 @@ describe('ngCatwalk', function() {
 
             var model = $catwalk.createModel('team', {
                 name: 'Netherlands',
+                worldCupWins: '0',
                 manager: 'Louis van Gaal'
             });
 
             expect(model.name).toBe('Netherlands');
-            expect(model.colour).toBe('');
+            expect(model.worldCupWins).toBe(0);
+            expect(model.colour).toBeNull();
             expect(model.manager).toBeUndefined();
 
         })
