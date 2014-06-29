@@ -5,19 +5,28 @@
         throw "ngCatwalk: " + message + ".";
     };
     var ngCatwalkAttribute = {
-        generic: function generic() {
+        any: function any( defaultValue ) {
             return function ( value ) {
-                return value;
+                if ( value === null ) {
+                    return null;
+                }
+                return typeof value !== 'undefined' ? value : defaultValue;
             };
         },
-        number: function number() {
+        number: function number( defaultValue ) {
             return function ( value ) {
-                return +value;
+                if ( value === null ) {
+                    return null;
+                }
+                return typeof value !== 'undefined' ? +value : defaultValue;
             };
         },
-        string: function string() {
+        string: function string( defaultValue ) {
             return function ( value ) {
-                return String( value );
+                if ( value === null ) {
+                    return null;
+                }
+                return typeof value !== 'undefined' ? String( value ) : defaultValue;
             };
         }
     };
@@ -71,14 +80,23 @@
                                 delete model[ property ];
                             }
                         } );
-                    }() );
+                    } )();
                     ( function addProperties() {
                         iterator( blueprint, function iterator( property ) {
                             if ( typeof model[ property ] !== 'undefined' || property === primaryKey ) {
                                 return;
                             }
                             var typecast = blueprint[ property ];
-                            model[ property ] = typecast( '' );
+                            model[ property ] = typecast( null );
+                        } );
+                    } )();
+                    ( function typecastProperties() {
+                        iterator( blueprint, function iterator( property ) {
+                            if ( model[ property ] === null ) {
+                                return;
+                            }
+                            var typecast = blueprint[ property ];
+                            model[ property ] = typecast( model[ property ] );
                         } );
                     } )();
                     return model;
