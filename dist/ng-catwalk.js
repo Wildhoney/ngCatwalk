@@ -37,7 +37,7 @@
             Catwalk.prototype = {
                 attribute: ngCatwalkAttribute,
                 relationship: ngCatwalkRelationship,
-                _primaryName: '__catwalkId__',
+                _primaryName: '_catwalkId',
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
                 _collections: {},
@@ -67,31 +67,45 @@
                     model = this.cleanModel( collectionName, model );
                     this.collection( collectionName ).addModel( model );
                     var promise = this.createPromise( collectionName, 'create', [ model ] );
-                    promise.then( function andThen( properties ) {
-                        this.resolveCreateModel( collectionName, model, properties );
-                    }.bind( this ) );
-                    promise.catch( function andCatch() {
-                        this.rejectCreateModel( collectionName, model );
-                    }.bind( this ) );
+                    promise.then( this.resolveCreateModel( collectionName, model ).bind( this ) );
+                    promise.catch( this.rejectCreateModel( collectionName, model ).bind( this ) );
                     return model;
                 },
                 rejectCreateModel: function rejectCreateModel( collectionName, model ) {
-                    this.collection( collectionName ).deleteModel( model );
+                    return function rejectPromise() {
+                        this.silently( function silentlyDelete() {
+                            this.collection( collectionName ).deleteModel( model );
+                        } );
+                    };
                 },
-                resolveCreateModel: function resolveCreateModel( collectionName, model, properties ) {
-                    var blueprint = this.collection( collectionName ).blueprint;
-                    this._propertyIterator( properties, function iterator( property ) {
-                        var typecast = blueprint[ property ];
-                        if ( typeof typecast === 'undefined' ) {
-                            return;
-                        }
-                        model[ property ] = typecast( properties[ property ] );
-                    } );
+                resolveCreateModel: function resolveCreateModel( collectionName, model ) {
+                    return function resolvePromise( properties ) {
+                        var blueprint = this.collection( collectionName ).blueprint;
+                        this._propertyIterator( properties, function iterator( property ) {
+                            var typecast = blueprint[ property ];
+                            if ( typeof typecast === 'undefined' ) {
+                                return;
+                            }
+                            model[ property ] = typecast( properties[ property ] );
+                        } );
+                    };
                 },
                 updateModel: function updateModel( collectionName, model, properties ) {},
-                revertUpdateModel: function revertUpdateModel( collectionName, model, oldProperties ) {},
-                deleteModel: function deleteModel( collectionName, model ) {},
-                revertDeleteModel: function revertDeleteModel( collectionName, model ) {},
+                resolveUpdateModel: function resolveUpdateModel( collectionName, model ) {},
+                rejectUpdateModel: function rejectUpdateModel( collectionName, model, oldProperties ) {},
+                deleteModel: function deleteModel( collectionName, model ) {
+                    this.collection( collectionName ).deleteModel( model );
+                    var promise = this.createPromise( collectionName, 'delete', [ model ] );
+                    promise.then( this.resolveDeleteModel( collectionName, model ).bind( this ) );
+                    promise.catch( this.rejectDeleteModel( collectionName, model ).bind( this ) );
+                    return model;
+                },
+                resolveDeleteModel: function resolveDeleteModel( collectionName, model ) {
+                    return function resolvePromise() {};
+                },
+                rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
+                    return function rejectPromise() {};
+                },
                 createPromise: function createPromise( collectionName, type, args ) {
                     var deferred = $q.defer();
                     if ( !Array.isArray( args ) ) {
