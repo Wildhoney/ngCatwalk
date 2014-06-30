@@ -1,7 +1,7 @@
 ( function ngCatwalk( $angular ) {
     "use strict";
     var app = $angular.module( 'ngCatwalk', [ 'ngCrossfilter' ] );
-    var _throwException = function _throwException( message ) {
+    var throwException = function throwException( message ) {
         throw "ngCatwalk: " + message + ".";
     };
     var ngCatwalkAttribute = {
@@ -12,6 +12,12 @@
                 }
                 return typeof value !== 'undefined' ? value : defaultValue;
             };
+        },
+        autoIncrement: function autoIncrement() {
+            var index = 0;
+            return function () {
+                return ++index;
+            }
         },
         number: function number( defaultValue ) {
             return function ( value ) {
@@ -30,13 +36,19 @@
             };
         }
     };
-    var ngCatwalkRelationship = {};
+    var ngCatwalkRelationship = {
+        One: function One( options ) {}
+    };
     app.service( 'catwalk', [ '$rootScope', '$q', '$interpolate', 'Crossfilter',
         function CatwalkService( $rootScope, $q, $interpolate, Crossfilter ) {
             function Catwalk() {}
             Catwalk.prototype = {
                 attribute: ngCatwalkAttribute,
-                relationship: ngCatwalkRelationship,
+                relationship: {
+                    hasOne: function hasOne( options ) {
+                        return new ngCatwalkRelationship.One( options );
+                    }
+                },
                 _primaryName: '_catwalkId',
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
@@ -128,6 +140,7 @@
                 cleanModel: function cleanModel( collectionName, model ) {
                     var blueprint = this.collection( collectionName ).blueprint,
                         iterator = this._propertyIterator,
+                        isRelationship = this.isRelationship.bind( this ),
                         primaryKey = this._primaryName;
                     model[ primaryKey ] = ++this.collection( collectionName ).index;
                     ( function removeProperties() {
@@ -139,19 +152,34 @@
                     } )();
                     ( function addAndTypecastProperties() {
                         iterator( blueprint, function iterator( property ) {
-                            var typecast = blueprint[ property ];
                             if ( typeof model[ property ] === 'undefined' && property !== primaryKey ) {
                                 model[ property ] = null;
                             }
-                            model[ property ] = typecast( model[ property ] );
+                            if ( !isRelationship( collectionName, property ) ) {
+                                var typecast = blueprint[ property ];
+                                model[ property ] = typecast( model[ property ] );
+                                return;
+                            }
                         } );
                     } )();
                     return model;
                 },
+                isRelationship: function isRelationship( collectionName, property ) {
+                    var propertyBlueprint = this.collection( collectionName ).blueprint[ property ],
+                        relationships = [ ngCatwalkRelationship.One ];
+                    for ( var index in relationships ) {
+                        if ( relationships.hasOwnProperty( index ) ) {
+                            if ( propertyBlueprint instanceof relationships[ index ] ) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                },
                 _propertyIterator: function _propertyIterator( model, iteratorFunction ) {
                     for ( var property in model ) {
                         if ( model.hasOwnProperty( property ) ) {
-                            iteratorFunction( property );
+                            iteratorFunction.call( this, property );
                         }
                     }
                 }
