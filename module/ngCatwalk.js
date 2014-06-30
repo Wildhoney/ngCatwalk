@@ -33,7 +33,7 @@
                     return null;
                 }
 
-                return typeof value !== 'undefined' ? value : defaultValue;
+                return $angular.isDefined(value) ? value : defaultValue;
 
             };
 
@@ -79,7 +79,7 @@
                     return null;
                 }
 
-                return typeof value !== 'undefined' ? +value : defaultValue;
+                return $angular.isDefined(value) ? +value : defaultValue;
 
             };
 
@@ -98,7 +98,7 @@
                     return defaultValue || null;
                 }
 
-                return typeof value !== 'undefined' ? String(value) : defaultValue;
+                return $angular.isDefined(value) ? String(value) : defaultValue;
 
             };
 
@@ -376,7 +376,7 @@
 
                             // Don't add properties to the model if it hasn't been defined in
                             // the blueprint.
-                            if (typeof typecast === 'undefined') {
+                            if (!$angular.isDefined(typecast)) {
                                 return;
                             }
 
@@ -520,10 +520,10 @@
                         internalId        = model[this._primaryName];
 
                     /**
-                     * @method storeRelationship
+                     * @method storeRelationshipData
                      * @return {void}
                      */
-                    (function storeRelationship() {
+                    (function storeRelationshipData() {
 
                         var record = {
                             localCollection:   collectionName,
@@ -544,11 +544,11 @@
                      */
                     (function recursivelyCreateRelationshipStore() {
 
-                        if (typeof store[collectionName] === 'undefined') {
+                        if (!$angular.isDefined(store[collectionName])) {
                             store[collectionName] = {};
                         }
 
-                        if (typeof store[collectionName][internalId] === 'undefined') {
+                        if (!$angular.isDefined(store[collectionName][internalId])) {
                             store[collectionName][internalId] = {};
                         }
 
@@ -813,7 +813,7 @@
                         iterator(blueprint, function iterator(property) {
 
                             // Ignore if it's already been defined, or it's the primary key.
-                            if (typeof model[property] === 'undefined' && property !== primaryKey) {
+                            if (!$angular.isDefined(model[property]) && property !== primaryKey) {
 
                                 // Create the property on the model, and typecast it.
                                 model[property] = null;
