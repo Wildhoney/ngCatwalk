@@ -117,6 +117,15 @@ describe('ngCatwalk', function() {
             netherlandsModel.playing = 'England';
             expect(netherlandsModel.playing.name).toEqual('England');
 
+            catwalk.deleteModel('team', englandModel);
+            expect(netherlandsModel.playing.name).toBeUndefined();
+
+            netherlandsModel.playing = 'Non-existent';
+            expect(netherlandsModel.playing.name).toBeUndefined();
+
+            netherlandsModel.playing = 'Netherlands';
+            expect(netherlandsModel.playing.name).toEqual('Netherlands');
+
         }));
 
     });
