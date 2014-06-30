@@ -10,7 +10,7 @@
                 if ( value === null ) {
                     return null;
                 }
-                return typeof value !== 'undefined' ? value : defaultValue;
+                return $angular.isDefined( value ) ? value : defaultValue;
             };
         },
         autoIncrement: function autoIncrement() {
@@ -29,7 +29,7 @@
                 if ( value === null ) {
                     return null;
                 }
-                return typeof value !== 'undefined' ? +value : defaultValue;
+                return $angular.isDefined( value ) ? +value : defaultValue;
             };
         },
         string: function string( defaultValue ) {
@@ -37,7 +37,7 @@
                 if ( value === null ) {
                     return defaultValue || null;
                 }
-                return typeof value !== 'undefined' ? String( value ) : defaultValue;
+                return $angular.isDefined( value ) ? String( value ) : defaultValue;
             };
         }
     };
@@ -119,26 +119,19 @@
                         var blueprint = this.collection( collectionName ).blueprint;
                         this._propertyIterator( properties, function iterator( property ) {
                             var typecast = blueprint[ property ];
-                            if ( typeof typecast === 'undefined' ) {
+                            if ( !$angular.isDefined( typecast ) ) {
                                 return;
                             }
                             model[ property ] = typecast( properties[ property ] );
                         } );
                     };
                 },
-                updateModel: function updateModel( collectionName, model, properties ) {},
-                resolveUpdateModel: function resolveUpdateModel( collectionName, model ) {},
-                rejectUpdateModel: function rejectUpdateModel( collectionName, model, oldProperties ) {},
                 deleteModel: function deleteModel( collectionName, model ) {
                     this.collection( collectionName ).deleteModel( model );
                     var promise = this.createPromise( collectionName, 'delete', [ model ] );
-                    promise.then( this.resolveDeleteModel( collectionName, model ).bind( this ) );
                     promise.catch( this.rejectDeleteModel( collectionName, model ).bind( this ) );
                     this.flushRelationships( collectionName, model );
                     return model;
-                },
-                resolveDeleteModel: function resolveDeleteModel( collectionName, model ) {
-                    return function resolvePromise() {};
                 },
                 rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
                     return function rejectPromise() {
@@ -167,7 +160,7 @@
                         foreignCollection = this.collection( options.collection ),
                         store = this._relationshipStore,
                         internalId = model[ this._primaryName ];
-                    ( function storeRelationship() {
+                    ( function storeRelationshipData() {
                         var record = {
                             localCollection: collectionName,
                             localProperty: property,
@@ -178,10 +171,10 @@
                         this._relationships[ key ] = record;
                     }.bind( this ) )();
                     ( function recursivelyCreateRelationshipStore() {
-                        if ( typeof store[ collectionName ] === 'undefined' ) {
+                        if ( !$angular.isDefined( store[ collectionName ] ) ) {
                             store[ collectionName ] = {};
                         }
-                        if ( typeof store[ collectionName ][ internalId ] === 'undefined' ) {
+                        if ( !$angular.isDefined( store[ collectionName ][ internalId ] ) ) {
                             store[ collectionName ][ internalId ] = {};
                         }
                     } )();
@@ -229,7 +222,7 @@
                             foreignCollection.filterBy( foreignKey, store[ collectionName ][ internalId ][ property ] );
                             var foreignModel = foreignCollection[ 0 ];
                             foreignCollection.unfilterAll();
-                            return foreignModel;
+                            return foreignModel || "Adam";
                         },
                         set: function set( value ) {
                             store[ collectionName ][ internalId ][ property ] = value;
@@ -259,6 +252,9 @@
                                     store[ collectionName ][ internalId ][ property ].splice( index, 1 );
                                 }
                             };
+                            foreignModels.clear = function clear() {
+                                store[ collectionName ][ internalId ][ property ] = [];
+                            };
                             foreignModels.has = function has( value ) {
                                 return store[ collectionName ][ internalId ][ property ].indexOf( value ) !== -1;
                             };
@@ -287,7 +283,7 @@
                     } )();
                     ( function addAndTypecastProperties() {
                         iterator( blueprint, function iterator( property ) {
-                            if ( typeof model[ property ] === 'undefined' && property !== primaryKey ) {
+                            if ( !$angular.isDefined( model[ property ] ) && property !== primaryKey ) {
                                 model[ property ] = null;
                             }
                             if ( !getRelationshipType( collectionName, property ) ) {
