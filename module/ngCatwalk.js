@@ -54,6 +54,19 @@
         },
 
         /**
+         * @method custom
+         * @param customFunction {Function}
+         * @return {Function}
+         */
+        custom: function custom(customFunction) {
+
+            return function(value) {
+                return customFunction(value);
+            };
+
+        },
+
+        /**
          * @method number
          * @param defaultValue {Number}
          * @returns {Function}

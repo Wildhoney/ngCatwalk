@@ -52,6 +52,16 @@ describe('ngCatwalk', function() {
 
         }));
 
+        it('Should be able to use custom attribute;', inject(function(catwalk) {
+
+            var customAttribute = catwalk.attribute.custom(function(value) {
+                return String(value).toUpperCase();
+            });
+
+            expect(customAttribute('Argentina')).toEqual('ARGENTINA');
+
+        }));
+
     });
 
     describe('Relationships', function() {
