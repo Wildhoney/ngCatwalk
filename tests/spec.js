@@ -138,6 +138,34 @@ describe('ngCatwalk', function() {
 
         }));
 
+        it('Should be able to define a hasMany relationship;', inject(function(catwalk) {
+
+            catwalk.collection('team', {
+                name: catwalk.attribute.string(),
+                inGroup: catwalk.relationship.hasMany({
+                    collection: 'team',
+                    foreignKey: 'name'
+                })
+            });
+
+            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', inGroup: ['Brazil', 'England'] }),
+                brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                englandModel     = catwalk.createModel('team', { name: 'England' });
+
+            expect(typeof netherlandsModel.inGroup).toBe('object');
+            expect(typeof brazilModel.inGroup).toBe('object');
+            expect(typeof englandModel.inGroup).toBe('object');
+
+            expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
+            expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
+            expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+
+            expect(netherlandsModel.inGroup.length).toEqual(2);
+            expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
+            expect(netherlandsModel.inGroup[1].name).toEqual('England');
+
+        }));
+
     });
 
     describe('Collection', function() {

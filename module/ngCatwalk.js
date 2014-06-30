@@ -583,6 +583,49 @@
                  */
                 createHasManyRelationship: function createHasManyRelationship(model, property, foreignCollection, foreignKey) {
 
+                    var internalId = model[this._primaryName],
+                        store      = this._relationshipStore;
+
+                    // Attach the property to the model relationship store.
+                    store[internalId][property] = model[property] || [];
+
+                    /**
+                     * @method inArray
+                     * @param expected {String|Number}
+                     * @param actual {String|Number}
+                     * @return {Boolean}
+                     */
+                    var inArray = function inArray(expected, actual) {
+                        return expected.indexOf(actual) !== -1;
+                    };
+
+                    $object.defineProperty(model, property, {
+
+                        /**
+                         * @method get
+                         * @return {Array}
+                         */
+                        get: function get() {
+
+                            // Fetch all of the models that pertain to our relationship array.
+                            foreignCollection.filterBy(foreignKey, store[internalId][property], inArray);
+                            var foreignModels = foreignCollection.collection(Infinity);
+                            foreignCollection.unfilterAll();
+                            return foreignModels;
+
+                        },
+
+                        /**
+                         * @method set
+                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
+                         * @return {void}
+                         */
+                        set: function set(value) {
+//                            store[internalId][property] = value;
+                        }
+
+                    });
+
                 },
 
                 /**
