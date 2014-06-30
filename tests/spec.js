@@ -56,95 +56,103 @@ describe('ngCatwalk', function() {
 
         }));
 
-        it('Should be able to create a model;', inject(function(catwalk) {
+    });
 
-            catwalk.collection('team', {
-                name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string(),
-                worldCupWins: catwalk.attribute.number()
-            });
+    describe('Models', function() {
 
-            var model = catwalk.createModel('team', {
-                name:         'Netherlands',
-                worldCupWins: '0',
-                manager:      'Louis van Gaal'
-            });
+        describe('Create', function() {
 
-            expect(model[catwalk._primaryName]).toBe(1);
-            expect(model.name).toBe('Netherlands');
-            expect(model.worldCupWins).toBe(0);
-            expect(model.colour).toBeNull();
-            expect(model.manager).toBeUndefined();
+            it('Should be able to create a model;', inject(function(catwalk) {
 
-        }));
-
-        it('Should be able to create a model using default properties;', inject(function(catwalk) {
-
-            catwalk.collection('team', {
-                name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string('none'),
-                worldCupWins: catwalk.attribute.number()
-            });
-
-            var model = catwalk.createModel('team', {
-                name:    'Netherlands',
-                manager: 'Louis van Gaal'
-            });
-
-            expect(model.colour).toEqual('none');
-
-        }));
-
-        it('Should be able to reject the creation of a model;', inject(function($rootScope, catwalk) {
-
-            catwalk.collection('team', {
-                name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string('none'),
-                worldCupWins: catwalk.attribute.number()
-            });
-
-            spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
-                deferred.reject();
-            });
-
-            catwalk.createModel('team', {
-                name:   'Netherlands',
-                colour: 'Orange'
-            });
-
-            $rootScope.$digest();
-
-            expect($rootScope.$broadcast).toHaveBeenCalled();
-            expect(catwalk.collection('team').length).toEqual(0);
-
-        }));
-
-        it('Should be able to resolve the creation of a model with additional properties;', inject(function($rootScope, catwalk) {
-
-            catwalk.collection('team', {
-                name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string('none'),
-                worldCupWins: catwalk.attribute.number()
-            });
-
-            spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
-                deferred.resolve({
-                    colour: 'Blue'
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string(),
+                    worldCupWins: catwalk.attribute.number()
                 });
-            });
 
-            var model = catwalk.createModel('team', {
-                name:   'Netherlands',
-                colour: 'Orange'
-            });
+                var model = catwalk.createModel('team', {
+                    name:         'Netherlands',
+                    worldCupWins: '0',
+                    manager:      'Louis van Gaal'
+                });
 
-            $rootScope.$digest();
+                expect(model[catwalk._primaryName]).toBe(1);
+                expect(model.name).toBe('Netherlands');
+                expect(model.worldCupWins).toBe(0);
+                expect(model.colour).toBeNull();
+                expect(model.manager).toBeUndefined();
 
-            expect($rootScope.$broadcast).toHaveBeenCalled();
-            expect(catwalk.collection('team').length).toEqual(1);
-            expect(model.colour).toEqual('Blue');
+            }));
 
-        }));
+            it('Should be able to create a model using default properties;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string('none'),
+                    worldCupWins: catwalk.attribute.number()
+                });
+
+                var model = catwalk.createModel('team', {
+                    name:    'Netherlands',
+                    manager: 'Louis van Gaal'
+                });
+
+                expect(model.colour).toEqual('none');
+
+            }));
+
+            it('Should be able to reject the creation of a model;', inject(function($rootScope, catwalk) {
+
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string('none'),
+                    worldCupWins: catwalk.attribute.number()
+                });
+
+                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                    deferred.reject();
+                });
+
+                catwalk.createModel('team', {
+                    name:   'Netherlands',
+                    colour: 'Orange'
+                });
+
+                $rootScope.$digest();
+
+                expect($rootScope.$broadcast).toHaveBeenCalled();
+                expect(catwalk.collection('team').length).toEqual(0);
+
+            }));
+
+            it('Should be able to resolve the creation of a model with additional properties;', inject(function($rootScope, catwalk) {
+
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string('none'),
+                    worldCupWins: catwalk.attribute.number()
+                });
+
+                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                    deferred.resolve({
+                        colour: 'Blue'
+                    });
+                });
+
+                var model = catwalk.createModel('team', {
+                    name:   'Netherlands',
+                    colour: 'Orange'
+                });
+
+                $rootScope.$digest();
+
+                expect($rootScope.$broadcast).toHaveBeenCalled();
+                expect(catwalk.collection('team').length).toEqual(1);
+                expect(model.colour).toEqual('Blue');
+
+            }));
+
+        })
 
     });
 
