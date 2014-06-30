@@ -114,6 +114,23 @@
                 return options;
             }
 
+        },
+
+        /**
+         * @method Many
+         * @param options {Object}
+         * @constructor
+         */
+        Many: function Many(options) {
+
+            /**
+             * @method getOptions
+             * @return {Object}
+             */
+            this.getOptions = function getOptions() {
+                return options;
+            }
+
         }
 
     };
@@ -167,6 +184,15 @@
                      */
                     hasOne: function hasOne(options) {
                         return new ngCatwalkRelationship.One(options);
+                    },
+
+                    /**
+                     * @property hasMany
+                     * @param options {Object}
+                     * @return {ngCatwalkRelationship.Many}
+                     */
+                    hasMany: function hasMany(options) {
+                        return new ngCatwalkRelationship.Many(options);
                     }
 
                 },
@@ -608,7 +634,7 @@
                 isRelationship: function isRelationship(collectionName, property) {
 
                     var propertyBlueprint = this.collection(collectionName).blueprint[property],
-                        relationships     = [ngCatwalkRelationship.One];
+                        relationships     = [ngCatwalkRelationship.One, ngCatwalkRelationship.Many];
 
                     for (var index in relationships) {
 
