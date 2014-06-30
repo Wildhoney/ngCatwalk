@@ -1,4 +1,4 @@
-( function ngCatwalk( $angular ) {
+( function ngCatwalk( $angular, $object ) {
     "use strict";
     var app = $angular.module( 'ngCatwalk', [ 'ngCrossfilter' ] );
     var throwException = function throwException( message ) {
@@ -37,7 +37,11 @@
         }
     };
     var ngCatwalkRelationship = {
-        One: function One( options ) {}
+        One: function One( options ) {
+            this.getOptions = function getOptions() {
+                return options;
+            }
+        }
     };
     app.service( 'catwalk', [ '$rootScope', '$q', '$interpolate', 'Crossfilter',
         function CatwalkService( $rootScope, $q, $interpolate, Crossfilter ) {
@@ -50,6 +54,7 @@
                     }
                 },
                 _primaryName: '_catwalkId',
+                _relationshipStores: {},
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
                 _collections: {},
@@ -138,10 +143,11 @@
                 createHasManyRelationship: function createHasManyRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
                 createHasOneRelationship: function createHasOneRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
                 cleanModel: function cleanModel( collectionName, model ) {
-                    var blueprint = this.collection( collectionName ).blueprint,
+                    var primaryKey = this._primaryName,
+                        blueprint = this.collection( collectionName ).blueprint,
                         iterator = this._propertyIterator,
                         isRelationship = this.isRelationship.bind( this ),
-                        primaryKey = this._primaryName;
+                        createRelationship = this.createRelationship.bind( this );
                     model[ primaryKey ] = ++this.collection( collectionName ).index;
                     ( function removeProperties() {
                         iterator( model, function iterator( property ) {
@@ -160,9 +166,32 @@
                                 model[ property ] = typecast( model[ property ] );
                                 return;
                             }
+                            createRelationship( collectionName, model, property );
                         } );
                     } )();
                     return model;
+                },
+                createRelationship: function createRelationship( collectionName, model, property ) {
+                    var localCollection = this.collection( collectionName ),
+                        options = localCollection.blueprint[ property ].getOptions(),
+                        foreignCollection = this.collection( options.collection ),
+                        store = this._relationshipStores,
+                        internalId = model[ this._primaryName ];
+                    if ( typeof store[ internalId ] === 'undefined' ) {
+                        store[ internalId ] = {};
+                    }
+                    store[ internalId ][ property ] = model[ property ] || '';
+                    $object.defineProperty( model, property, {
+                        get: function get() {
+                            foreignCollection.filterBy( options.foreignKey, store[ internalId ][ property ] );
+                            var foreignModel = foreignCollection[ 0 ];
+                            foreignCollection.unfilterAll();
+                            return foreignModel;
+                        },
+                        set: function set( value ) {
+                            store[ internalId ][ property ] = value;
+                        }
+                    } );
                 },
                 isRelationship: function isRelationship( collectionName, property ) {
                     var propertyBlueprint = this.collection( collectionName ).blueprint[ property ],
@@ -187,4 +216,4 @@
             return new Catwalk();
         }
     ] );
-} )( window.angular );
+} )( window.angular, window.Object );
