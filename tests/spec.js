@@ -129,7 +129,7 @@ describe('ngCatwalk', function() {
 
             }));
 
-            it('Should be able to define a hasOne relationship to another collection;', inject(function(catwalk) {
+            it('Should be able to define a hasOne relationship to another collection;', inject(function($rootScope, catwalk) {
 
                 catwalk.collection('team', {
                     name: catwalk.attribute.string(),
@@ -175,7 +175,7 @@ describe('ngCatwalk', function() {
 
             }));
 
-            it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
+            it('Should be able to update a hasOne relationship;', inject(function($rootScope, catwalk) {
 
                 catwalk.collection('team', {
                     name: catwalk.attribute.string(),
@@ -471,7 +471,7 @@ describe('ngCatwalk', function() {
                 expect(catwalk.collection('team')[0].colour).toEqual('Blue');
 
                 catwalk.updateModel('team', model, {
-                    name: 'France',
+                    name:    'France',
                     manager: 'Didier Deschamps',
                     playing: 'Modifying Relationship'
                 });
@@ -484,7 +484,31 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the updating of a model;', inject(function($rootScope, catwalk) {
 
+                catwalk.collection('team', {
+                    name:   catwalk.attribute.string(),
+                    colour: catwalk.attribute.string()
+                });
 
+                var model = catwalk.createModel('team', {
+                    name:   'Iceland',
+                    colour: 'Blue'
+                });
+
+                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
+                    deferred.reject();
+                });
+
+                catwalk.updateModel('team', model, {
+                    name:   'Argentina',
+                    colour: 'Sky Blue'
+                });
+
+                $rootScope.$digest();
+
+                expect($rootScope.$broadcast).toHaveBeenCalled();
+                expect(catwalk.collection('team').length).toEqual(1);
+                expect(catwalk.collection('team')[0].name).toEqual('Iceland');
+                expect(catwalk.collection('team')[0].colour).toEqual('Blue');
 
             }));
 

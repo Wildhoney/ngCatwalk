@@ -399,7 +399,7 @@
                  */
                 updateModel: function updateModel(collectionName, model, properties) {
 
-                    var blueprint        = this.collection(collectionName).blueprint,
+                    var blueprint         = this.collection(collectionName).blueprint,
                         updatedProperties = {};
 
                     this._propertyIterator(properties, function iterator(property) {
@@ -422,11 +422,11 @@
 
                     });
 
-//                    var promise = this.createPromise(collectionName, 'update', [model]);
+                    var promise = this.createPromise(collectionName, 'update', [model]);
 
-//                    // Promise resolution.
-//                    promise.then(this.resolveCreateModel(collectionName, model).bind(this));
-//                    promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
+                    // Promise resolution.
+                    promise.then(this.resolveUpdateModel(collectionName, model, updatedProperties).bind(this));
+                    promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
 
                     // Update relationships to remove any ghost references.
                     this.pruneRelationships(collectionName, updatedProperties);
@@ -439,9 +439,19 @@
                  * @method resolveUpdateModel
                  * @param collectionName {String}
                  * @param model {Object}
-                 * @return {Object}
+                 * @param updatedProperties {Object}
+                 * @return {Function}
                  */
-                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
+                resolveUpdateModel: function resolveUpdateModel(collectionName, model, updatedProperties) {
+
+                    return function resolvePromise() {
+
+                        console.log("Never gets here?");
+
+                        // Update relationships to remove any ghost references.
+                        this.pruneRelationships(collectionName, updatedProperties);
+
+                    }
 
                 },
 
@@ -450,9 +460,17 @@
                  * @param collectionName {String}
                  * @param model {Object}
                  * @param oldProperties {Object}
-                 * @return {Object}
+                 * @return {Function}
                  */
                 rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
+
+                    return function rejectPromise() {
+
+                        this._propertyIterator(oldProperties, function iterator(property) {
+                            model[property] = oldProperties[property];
+                        });
+
+                    };
 
                 },
 
@@ -495,7 +513,7 @@
                  * @method rejectDeleteModel
                  * @param collectionName {String}
                  * @param model {Object}
-                 * @return {Object}
+                 * @return {Function}
                  */
                 rejectDeleteModel: function rejectDeleteModel(collectionName, model) {
 

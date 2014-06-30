@@ -126,11 +126,43 @@
                         } );
                     };
                 },
+                updateModel: function updateModel( collectionName, model, properties ) {
+                    var blueprint = this.collection( collectionName ).blueprint,
+                        updatedProperties = {};
+                    this._propertyIterator( properties, function iterator( property ) {
+                        if ( this.getRelationshipType( collectionName, property ) ) {
+                            return;
+                        }
+                        if ( !$angular.isDefined( blueprint[ property ] ) ) {
+                            return;
+                        }
+                        updatedProperties[ property ] = model[ property ];
+                        model[ property ] = properties[ property ];
+                    } );
+                    var promise = this.createPromise( collectionName, 'update', [ model ] );
+                    promise.then( this.resolveUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
+                    promise.catch( this.rejectUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
+                    this.pruneRelationships( collectionName, updatedProperties );
+                    return model;
+                },
+                resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
+                    return function resolvePromise() {
+                        console.log( "Never gets here?" );
+                        this.pruneRelationships( collectionName, updatedProperties );
+                    }
+                },
+                rejectUpdateModel: function rejectUpdateModel( collectionName, model, oldProperties ) {
+                    return function rejectPromise() {
+                        this._propertyIterator( oldProperties, function iterator( property ) {
+                            model[ property ] = oldProperties[ property ];
+                        } );
+                    };
+                },
                 deleteModel: function deleteModel( collectionName, model ) {
                     this.collection( collectionName ).deleteModel( model );
                     var promise = this.createPromise( collectionName, 'delete', [ model ] );
                     promise.catch( this.rejectDeleteModel( collectionName, model ).bind( this ) );
-                    this.flushRelationships( collectionName, model );
+                    this.pruneRelationships( collectionName, model );
                     return model;
                 },
                 rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
@@ -189,7 +221,7 @@
                     }
                     this[ method ]( collectionName, model, property, foreignCollection, options.foreignKey );
                 },
-                flushRelationships: function flushRelationships( modifiedCollectionName, model ) {
+                pruneRelationships: function pruneRelationships( modifiedCollectionName, model ) {
                     this._propertyIterator( this._relationships, function iterator( property ) {
                         var relationshipData = this._relationships[ property ];
                         if ( relationshipData.foreignCollection !== modifiedCollectionName ) {
@@ -222,7 +254,7 @@
                             foreignCollection.filterBy( foreignKey, store[ collectionName ][ internalId ][ property ] );
                             var foreignModel = foreignCollection[ 0 ];
                             foreignCollection.unfilterAll();
-                            return foreignModel || "Adam";
+                            return foreignModel;
                         },
                         set: function set( value ) {
                             store[ collectionName ][ internalId ][ property ] = value;
