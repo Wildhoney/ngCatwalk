@@ -19,6 +19,11 @@
                 return ++index;
             }
         },
+        custom: function custom( customFunction ) {
+            return function ( value ) {
+                return customFunction( value );
+            };
+        },
         number: function number( defaultValue ) {
             return function ( value ) {
                 if ( value === null ) {
@@ -41,6 +46,11 @@
             this.getOptions = function getOptions() {
                 return options;
             }
+        },
+        Many: function Many( options ) {
+            this.getOptions = function getOptions() {
+                return options;
+            }
         }
     };
     app.service( 'catwalk', [ '$rootScope', '$q', '$interpolate', 'Crossfilter',
@@ -51,10 +61,13 @@
                 relationship: {
                     hasOne: function hasOne( options ) {
                         return new ngCatwalkRelationship.One( options );
+                    },
+                    hasMany: function hasMany( options ) {
+                        return new ngCatwalkRelationship.Many( options );
                     }
                 },
                 _primaryName: '_catwalkId',
-                _relationshipStores: {},
+                _relationshipStore: {},
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
                 _collections: {},
@@ -140,13 +153,52 @@
                     $rootScope.$broadcast( eventName, args[ 0 ], args[ 1 ], args[ 2 ] );
                     return deferred.promise;
                 },
+                createRelationship: function createRelationship( collectionName, model, property ) {
+                    var localCollection = this.collection( collectionName ),
+                        blueprint = localCollection.blueprint[ property ],
+                        options = blueprint.getOptions(),
+                        foreignCollection = this.collection( options.collection ),
+                        store = this._relationshipStore,
+                        internalId = model[ this._primaryName ];
+                    if ( typeof store[ internalId ] === 'undefined' ) {
+                        store[ internalId ] = {};
+                    }
+                    var method = 'throwRelationshipException';
+                    switch ( this.getRelationshipType( collectionName, property ) ) {
+                    case ( 'One' ):
+                        method = 'createHasOneRelationship';
+                        break;
+                    case ( 'Many' ):
+                        method = 'createHasManyRelationship';
+                        break;
+                    }
+                    this[ method ]( model, property, foreignCollection, options.foreignKey );
+                },
+                throwRelationshipException: function throwRelationshipException() {
+                    throwException( "Congratulations! You managed to create an invalid relationship" );
+                },
+                createHasOneRelationship: function createHasOneRelationship( model, property, foreignCollection, foreignKey ) {
+                    var internalId = model[ this._primaryName ],
+                        store = this._relationshipStore;
+                    store[ internalId ][ property ] = model[ property ] || '';
+                    $object.defineProperty( model, property, {
+                        get: function get() {
+                            foreignCollection.filterBy( foreignKey, store[ internalId ][ property ] );
+                            var foreignModel = foreignCollection[ 0 ];
+                            foreignCollection.unfilterAll();
+                            return foreignModel;
+                        },
+                        set: function set( value ) {
+                            store[ internalId ][ property ] = value;
+                        }
+                    } );
+                },
                 createHasManyRelationship: function createHasManyRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
-                createHasOneRelationship: function createHasOneRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
                 cleanModel: function cleanModel( collectionName, model ) {
                     var primaryKey = this._primaryName,
                         blueprint = this.collection( collectionName ).blueprint,
                         iterator = this._propertyIterator,
-                        isRelationship = this.isRelationship.bind( this ),
+                        getRelationshipType = this.getRelationshipType.bind( this ),
                         createRelationship = this.createRelationship.bind( this );
                     model[ primaryKey ] = ++this.collection( collectionName ).index;
                     ( function removeProperties() {
@@ -161,7 +213,7 @@
                             if ( typeof model[ property ] === 'undefined' && property !== primaryKey ) {
                                 model[ property ] = null;
                             }
-                            if ( !isRelationship( collectionName, property ) ) {
+                            if ( !getRelationshipType( collectionName, property ) ) {
                                 var typecast = blueprint[ property ];
                                 model[ property ] = typecast( model[ property ] );
                                 return;
@@ -171,39 +223,20 @@
                     } )();
                     return model;
                 },
-                createRelationship: function createRelationship( collectionName, model, property ) {
-                    var localCollection = this.collection( collectionName ),
-                        options = localCollection.blueprint[ property ].getOptions(),
-                        foreignCollection = this.collection( options.collection ),
-                        store = this._relationshipStores,
-                        internalId = model[ this._primaryName ];
-                    if ( typeof store[ internalId ] === 'undefined' ) {
-                        store[ internalId ] = {};
-                    }
-                    store[ internalId ][ property ] = model[ property ] || '';
-                    $object.defineProperty( model, property, {
-                        get: function get() {
-                            foreignCollection.filterBy( options.foreignKey, store[ internalId ][ property ] );
-                            var foreignModel = foreignCollection[ 0 ];
-                            foreignCollection.unfilterAll();
-                            return foreignModel;
-                        },
-                        set: function set( value ) {
-                            store[ internalId ][ property ] = value;
-                        }
-                    } );
-                },
-                isRelationship: function isRelationship( collectionName, property ) {
+                getRelationshipType: function getRelationshipType( collectionName, property ) {
                     var propertyBlueprint = this.collection( collectionName ).blueprint[ property ],
-                        relationships = [ ngCatwalkRelationship.One ];
+                        relationships = {
+                            One: ngCatwalkRelationship.One,
+                            Many: ngCatwalkRelationship.Many
+                        };
                     for ( var index in relationships ) {
                         if ( relationships.hasOwnProperty( index ) ) {
                             if ( propertyBlueprint instanceof relationships[ index ] ) {
-                                return true;
+                                return index;
                             }
                         }
                     }
-                    return false;
+                    return null;
                 },
                 _propertyIterator: function _propertyIterator( model, iteratorFunction ) {
                     for ( var property in model ) {
