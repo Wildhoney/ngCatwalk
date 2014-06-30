@@ -611,6 +611,35 @@
                             foreignCollection.filterBy(foreignKey, store[internalId][property], inArray);
                             var foreignModels = foreignCollection.collection(Infinity);
                             foreignCollection.unfilterAll();
+
+                            /**
+                             * @method add
+                             * @param value {String|Number}
+                             * @return {void}
+                             */
+                            foreignModels.add = function add(value) {
+                                store[internalId][property].push(value);
+                            };
+
+                            /**
+                             * @method remove
+                             * @param value {String|Number}
+                             * @return {void}
+                             */
+                            foreignModels.remove = function remove(value) {
+                                var index = store[internalId][property].indexOf(value);
+                                store[internalId][property].splice(index, 1);
+                            };
+
+                            /**
+                             * @method has
+                             * @param value {String|Number}
+                             * @return {Boolean}
+                             */
+                            foreignModels.has = function has(value) {
+                                return store[internalId][property].indexOf(value) !== -1;
+                            };
+
                             return foreignModels;
 
                         },
@@ -621,6 +650,7 @@
                          * @return {void}
                          */
                         set: function set(value) {
+                            console.log('Here');
 //                            store[internalId][property] = value;
                         }
 

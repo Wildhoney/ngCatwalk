@@ -138,6 +138,9 @@ describe('ngCatwalk', function() {
                 netherlandsModel.playing = 'Netherlands';
                 expect(netherlandsModel.playing.name).toEqual('Netherlands');
 
+                netherlandsModel.playing = 'Spain';
+                expect(netherlandsModel.playing.name).toEqual();
+
             }));
 
         });
@@ -189,6 +192,20 @@ describe('ngCatwalk', function() {
                 expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
                 expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
                 expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+
+                expect(typeof netherlandsModel.inGroup.add).toEqual('function');
+                netherlandsModel.inGroup.add('Brazil');
+                expect(netherlandsModel.inGroup.length).toEqual(1);
+                expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
+
+                netherlandsModel.inGroup.remove('Brazil');
+                expect(netherlandsModel.inGroup.length).toEqual(0);
+
+                netherlandsModel.inGroup.add('Brazil');
+                netherlandsModel.inGroup.add('England');
+                netherlandsModel.inGroup.add('Algeria');
+                expect(netherlandsModel.inGroup.length).toEqual(2);
+                expect(netherlandsModel.inGroup.has('England')).toBeTruthy();
 
             }));
 
