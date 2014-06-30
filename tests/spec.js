@@ -37,6 +37,21 @@ describe('ngCatwalk', function() {
 
         }));
 
+        it('Should be able to increment autoincrement attribute;', inject(function(catwalk) {
+
+            var firstAutoIncrementAttribute = catwalk.attribute.autoIncrement();
+            expect(firstAutoIncrementAttribute()).toEqual(1);
+            expect(firstAutoIncrementAttribute()).toEqual(2);
+            expect(firstAutoIncrementAttribute()).toEqual(3);
+
+            var secondAutoIncrementAttribute = catwalk.attribute.autoIncrement();
+            expect(secondAutoIncrementAttribute()).toEqual(1);
+
+            expect(firstAutoIncrementAttribute()).toEqual(4);
+            expect(secondAutoIncrementAttribute()).toEqual(2);
+
+        }));
+
     });
 
     describe('Collection', function() {

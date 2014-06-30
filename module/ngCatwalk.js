@@ -40,6 +40,20 @@
         },
 
         /**
+         * @method autoIncrement
+         * @return {Function}
+         */
+        autoIncrement: function autoIncrement() {
+
+            var index = 0;
+
+            return function() {
+                return ++index;
+            }
+
+        },
+
+        /**
          * @method number
          * @param defaultValue {Number}
          * @returns {Function}
