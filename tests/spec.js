@@ -133,10 +133,14 @@ describe('ngCatwalk', function() {
                     worldCupWins: catwalk.attribute.number()
                 });
 
-                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
+
+                    expect(typeof model).toEqual('object');
+
                     deferred.resolve({
                         colour: 'Blue'
                     });
+
                 });
 
                 var model = catwalk.createModel('team', {
@@ -165,11 +169,46 @@ describe('ngCatwalk', function() {
                 });
 
                 var model = catwalk.createModel('team', {
-                    name: 'Netherlands'
+                    name: 'Iceland',
+                    colour: 'Blue'
                 });
 
                 expect(catwalk.collection('team').length).toEqual(1);
                 catwalk.deleteModel('team', model);
+                expect(catwalk.collection('team').length).toEqual(0);
+
+            }));
+
+            it('Should be able to reject the deletion of a model;', inject(function($rootScope, catwalk) {
+
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string(),
+                    worldCupWins: catwalk.attribute.number()
+                });
+
+                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
+
+                    expect(typeof model).toEqual('object');
+
+                    deferred.reject();
+
+                });
+
+                catwalk.createModel('team', {
+                    name: 'Iceland'
+                });
+
+                var model = catwalk.createModel('team', {
+                    name: 'Iceland',
+                    colour: 'Blue'
+                });
+
+                catwalk.deleteModel('team', model);
+
+                $rootScope.$digest();
+
+                expect($rootScope.$broadcast).toHaveBeenCalled();
                 expect(catwalk.collection('team').length).toEqual(0);
 
             }));
