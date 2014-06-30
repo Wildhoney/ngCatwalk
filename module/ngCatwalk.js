@@ -217,10 +217,10 @@
                 _primaryName: '_catwalkId',
 
                 /**
-                 * @property _relationshipStores
+                 * @property _relationshipStore
                  * @type {Object}
                  */
-                _relationshipStores: {},
+                _relationshipStore: {},
 
                 /**
                  * @property _silent
@@ -482,6 +482,77 @@
                 },
 
                 /**
+                 * @method createRelationship
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param property {String}
+                 * @return {void}
+                 */
+                createRelationship: function createRelationship(collectionName, model, property) {
+
+                    var localCollection   = this.collection(collectionName),
+                        options           = localCollection.blueprint[property].getOptions(),
+                        foreignCollection = this.collection(options.collection),
+                        store             = this._relationshipStore,
+                        internalId        = model[this._primaryName];
+
+                    if (typeof store[internalId] === 'undefined') {
+
+                        // Create the relationship store for the model if it doesn't exist already.
+                        store[internalId] = {};
+
+                    }
+
+                    this.createHasOneRelationship(model, property, foreignCollection, options.foreignKey);
+
+                },
+
+                /**
+                 * @method createHasOneRelationship
+                 * @param model {Object}
+                 * @param property {String}
+                 * @param foreignCollection {Array}
+                 * @param foreignKey {String}
+                 * @return {Boolean}
+                 */
+                createHasOneRelationship: function createHasOneRelationship(model, property, foreignCollection, foreignKey) {
+
+                    var internalId = model[this._primaryName],
+                        store      = this._relationshipStore;
+
+                    // Attach the property to the model relationship store.
+                    store[internalId][property] = model[property] || '';
+
+                    $object.defineProperty(model, property, {
+
+                        /**
+                         * @method get
+                         * @return {Object}
+                         */
+                        get: function get() {
+
+                            // Filter the foreign collection by the value we've defined on the local model.
+                            foreignCollection.filterBy(foreignKey, store[internalId][property]);
+                            var foreignModel = foreignCollection[0];
+                            foreignCollection.unfilterAll();
+                            return foreignModel;
+
+                        },
+
+                        /**
+                         * @method set
+                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
+                         * @return {void}
+                         */
+                        set: function set(value) {
+                            store[internalId][property] = value;
+                        }
+
+                    });
+
+                },
+
+                /**
                  * @method createHasManyRelationship
                  * @param model {Object}
                  * @param fromCollectionName {String}
@@ -492,20 +563,6 @@
                  * @return {Boolean}
                  */
                 createHasManyRelationship: function createHasManyRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
-
-                },
-
-                /**
-                 * @method createHasOneRelationship
-                 * @param model {Object}
-                 * @param fromCollectionName {String}
-                 * @param fromProperty {String}
-                 * @param toCollectionName {String}
-                 * @param toProperty {String}
-                 * @param value {String|Number|Boolean}
-                 * @return {Boolean}
-                 */
-                createHasOneRelationship: function createHasOneRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
 
                 },
 
@@ -580,61 +637,6 @@
                     })();
 
                     return model;
-
-                },
-
-                /**
-                 * @method createRelationship
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param property {String}
-                 * @return {void}
-                 */
-                createRelationship: function createRelationship(collectionName, model, property) {
-
-                    var localCollection   = this.collection(collectionName),
-                        options           = localCollection.blueprint[property].getOptions(),
-                        foreignCollection = this.collection(options.collection),
-                        store             = this._relationshipStores,
-                        internalId        = model[this._primaryName];
-
-                    if (typeof store[internalId] === 'undefined') {
-
-                        // Create the relationship store for the model if it doesn't exist already.
-                        store[internalId] = {};
-
-                    }
-
-                    // Attach the property to the model relationship store.
-                    store[internalId][property] = model[property] || '';
-
-                    $object.defineProperty(model, property, {
-
-                        /**
-                         * @method get
-                         * @return {Object}
-                         */
-                        get: function get() {
-
-                            // Filter the foreign collection by the value we've defined on the local model.
-                            foreignCollection.filterBy(options.foreignKey, store[internalId][property]);
-                            var foreignModel = foreignCollection[0];
-                            foreignCollection.unfilterAll();
-                            return foreignModel;
-
-                        },
-
-                        /**
-                         * @method set
-                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
-                         * @return {void}
-                         */
-                        set: function set(value) {
-                            store[internalId][property] = value;
-                        }
-
-                    });
-
 
                 },
 
