@@ -131,7 +131,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-jsbeautifier');
 
     grunt.registerTask('build', ['copy', 'uglify', 'compress', 'comments', 'jsbeautifier']);
-    grunt.registerTask('test', ['jshint', 'jasmine']);
+//    grunt.registerTask('test', ['jshint', 'jasmine']);
+    grunt.registerTask('test', ['jasmine']);
     grunt.registerTask('default', ['jasmine', 'jshint', 'compress', 'copy', 'uglify', 'comments', 'jsbeautifier']);
 
 };

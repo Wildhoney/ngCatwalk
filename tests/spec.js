@@ -160,6 +160,19 @@ describe('ngCatwalk', function() {
                 englandModel.manager = 'Roy Hodgson';
                 expect(englandModel.manager.name).toEqual('Roy Hodgson');
 
+                catwalk.updateModel('manager', royHodgsonModel, {
+                    name: 'Gary Linekar'
+                });
+                expect(englandModel.manager.name).toEqual();
+
+                catwalk.updateModel('manager', royHodgsonModel, {
+                    name: 'Roy Hodgson'
+                });
+                expect(englandModel.manager.name).toEqual();
+
+                englandModel.manager = 'Roy Hodgson';
+                expect(englandModel.manager.name).toEqual('Roy Hodgson');
+
             }));
 
             it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
@@ -195,6 +208,20 @@ describe('ngCatwalk', function() {
 
                 netherlandsModel.playing = 'Spain';
                 expect(netherlandsModel.playing.name).toEqual();
+
+                netherlandsModel.playing = 'Brazil';
+                expect(netherlandsModel.playing.name).toEqual('Brazil');
+                catwalk.updateModel('team', brazilModel, {
+                    name: 'Costa Rica'
+                });
+                expect(netherlandsModel.playing.name).toEqual();
+
+                catwalk.updateModel('team', brazilModel, {
+                    name: 'Brazil'
+                });
+                expect(netherlandsModel.playing.name).toEqual();
+                netherlandsModel.playing = 'Brazil';
+                expect(netherlandsModel.playing.name).toEqual('Brazil');
 
             }));
 
@@ -244,8 +271,8 @@ describe('ngCatwalk', function() {
                     name: catwalk.attribute.string()
                 });
 
-                var players             = ['Leighton Baines', 'Steven Gerrard'],
-                    englandModel        = catwalk.createModel('team', { name: 'England', players: players });
+                var players      = ['Leighton Baines', 'Steven Gerrard'],
+                    englandModel = catwalk.createModel('team', { name: 'England', players: players });
 
                 catwalk.createModel('player', { name: 'Leighton Baines' });
                 catwalk.createModel('player', { name: 'Steven Gerrard' });
@@ -422,6 +449,47 @@ describe('ngCatwalk', function() {
 
         });
 
+        describe('Update', function() {
+
+            it('Should be able to update a model;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name:    catwalk.attribute.any(),
+                    colour:  catwalk.attribute.string(),
+                    playing: catwalk.relationship.hasOne({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
+
+                var model = catwalk.createModel('team', {
+                    name:   'Iceland',
+                    colour: 'Blue'
+                });
+
+                expect(catwalk.collection('team')[0].name).toEqual('Iceland');
+                expect(catwalk.collection('team')[0].colour).toEqual('Blue');
+
+                catwalk.updateModel('team', model, {
+                    name: 'France',
+                    manager: 'Didier Deschamps',
+                    playing: 'Modifying Relationship'
+                });
+
+                expect(catwalk.collection('team')[0].name).toEqual('France');
+                expect(catwalk.collection('team')[0].manager).toBeUndefined();
+                expect(typeof catwalk.collection('team')[0].playing).toEqual('object');
+
+            }));
+
+            it('Should be able to reject the updating of a model;', inject(function($rootScope, catwalk) {
+
+
+
+            }));
+
+        });
+
         describe('Delete', function() {
 
             it('Should be able to delete a model;', inject(function(catwalk) {
@@ -433,7 +501,7 @@ describe('ngCatwalk', function() {
                 });
 
                 var model = catwalk.createModel('team', {
-                    name: 'Iceland',
+                    name:   'Iceland',
                     colour: 'Blue'
                 });
 

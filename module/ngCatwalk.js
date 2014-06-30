@@ -390,37 +390,71 @@
 
                 },
 
-//                /**
-//                 * @method updateModel
-//                 * @param collectionName {String}
-//                 * @param model {Object}
-//                 * @param properties {Object}
-//                 * @return {Object}
-//                 */
-//                updateModel: function updateModel(collectionName, model, properties) {
-//
-//                },
-//
-//                /**
-//                 * @method resolveUpdateModel
-//                 * @param collectionName {String}
-//                 * @param model {Object}
-//                 * @return {Object}
-//                 */
-//                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
-//
-//                },
-//
-//                /**
-//                 * @method rejectUpdateModel
-//                 * @param collectionName {String}
-//                 * @param model {Object}
-//                 * @param oldProperties {Object}
-//                 * @return {Object}
-//                 */
-//                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
-//
-//                },
+                /**
+                 * @method updateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param properties {Object}
+                 * @return {Object}
+                 */
+                updateModel: function updateModel(collectionName, model, properties) {
+
+                    var blueprint        = this.collection(collectionName).blueprint,
+                        updatedProperties = {};
+
+                    this._propertyIterator(properties, function iterator(property) {
+
+                        // Exclude properties that are part of relationships from being updated.
+                        if (this.getRelationshipType(collectionName, property)) {
+                            return;
+                        }
+
+                        // Exclude properties that aren't in the blueprint.
+                        if (!$angular.isDefined(blueprint[property])) {
+                            return;
+                        }
+
+                        // Keep a track of the original properties for the pruning of the relationships.
+                        updatedProperties[property] = model[property];
+
+                        // Update the model with that specified.
+                        model[property] = properties[property];
+
+                    });
+
+//                    var promise = this.createPromise(collectionName, 'update', [model]);
+
+//                    // Promise resolution.
+//                    promise.then(this.resolveCreateModel(collectionName, model).bind(this));
+//                    promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
+
+                    // Update relationships to remove any ghost references.
+                    this.pruneRelationships(collectionName, updatedProperties);
+
+                    return model;
+
+                },
+
+                /**
+                 * @method resolveUpdateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
+
+                },
+
+                /**
+                 * @method rejectUpdateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param oldProperties {Object}
+                 * @return {Object}
+                 */
+                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
+
+                },
 
                 /**
                  * @method deleteModel
@@ -430,7 +464,7 @@
                  */
                 deleteModel: function deleteModel(collectionName, model) {
 
-                    // Add the model to the collection and generate the promise.
+                    // Delete the model from the collection and generate the promise.
                     this.collection(collectionName).deleteModel(model);
                     var promise = this.createPromise(collectionName, 'delete', [model]);
 
@@ -439,7 +473,7 @@
                     promise.catch(this.rejectDeleteModel(collectionName, model).bind(this));
 
                     // Update relationships to remove any ghost references.
-                    this.flushRelationships(collectionName, model);
+                    this.pruneRelationships(collectionName, model);
 
                     return model;
 
@@ -571,12 +605,15 @@
                 },
 
                 /**
-                 * @method flushRelationships
+                 * Responsible for pruning relationships where deleting and/or updating models would
+                 * otherwise leave invalid relationships.
+                 *
+                 * @method pruneRelationships
                  * @param modifiedCollectionName {String}
                  * @param model {Object}
                  * @return {void}
                  */
-                flushRelationships: function flushRelationships(modifiedCollectionName, model) {
+                pruneRelationships: function pruneRelationships(modifiedCollectionName, model) {
 
                     this._propertyIterator(this._relationships, function iterator(property) {
 
@@ -652,7 +689,7 @@
                             foreignCollection.filterBy(foreignKey, store[collectionName][internalId][property]);
                             var foreignModel = foreignCollection[0];
                             foreignCollection.unfilterAll();
-                            return foreignModel || "Adam";
+                            return foreignModel;
 
                         },
 
