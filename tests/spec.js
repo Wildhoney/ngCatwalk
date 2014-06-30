@@ -84,87 +84,115 @@ describe('ngCatwalk', function() {
 
         }));
 
-        it('Should be able to define a hasOne relationship;', inject(function(catwalk) {
+        describe('Has One', function() {
 
-            catwalk.collection('team', {
-                name: catwalk.attribute.string(),
-                playing: catwalk.relationship.hasOne({
-                    collection: 'team',
-                    foreignKey: 'name'
-                })
-            });
+            it('Should be able to define a hasOne relationship;', inject(function(catwalk) {
 
-            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
-                brazilModel      = catwalk.createModel('team', { name: 'Brazil', playing: 'Netherlands' });
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    playing: catwalk.relationship.hasOne({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
 
-            expect(typeof netherlandsModel.playing).toBe('object');
-            expect(typeof brazilModel.playing).toBe('object');
+                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                    brazilModel      = catwalk.createModel('team', { name: 'Brazil', playing: 'Netherlands' });
 
-            expect(netherlandsModel.playing.name).toEqual('Brazil');
-            expect(brazilModel.playing.name).toEqual('Netherlands');
+                expect(typeof netherlandsModel.playing).toBe('object');
+                expect(typeof brazilModel.playing).toBe('object');
 
-        }));
+                expect(netherlandsModel.playing.name).toEqual('Brazil');
+                expect(brazilModel.playing.name).toEqual('Netherlands');
 
-        it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
+            }));
 
-            catwalk.collection('team', {
-                name: catwalk.attribute.string(),
-                playing: catwalk.relationship.hasOne({
-                    collection: 'team',
-                    foreignKey: 'name'
-                })
-            });
+            it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
 
-            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
-                brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                englandModel     = catwalk.createModel('team', { name: 'England' });
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    playing: catwalk.relationship.hasOne({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
 
-            expect(typeof netherlandsModel.playing).toBe('object');
-            expect(typeof brazilModel.playing).toBe('object');
-            expect(typeof englandModel.playing).toBe('object');
+                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                    englandModel     = catwalk.createModel('team', { name: 'England' });
 
-            expect(netherlandsModel.playing.name).toEqual('Brazil');
-            netherlandsModel.playing = 'England';
-            expect(netherlandsModel.playing.name).toEqual('England');
+                expect(typeof netherlandsModel.playing).toBe('object');
+                expect(typeof brazilModel.playing).toBe('object');
+                expect(typeof englandModel.playing).toBe('object');
 
-            catwalk.deleteModel('team', englandModel);
-            expect(netherlandsModel.playing.name).toBeUndefined();
+                expect(netherlandsModel.playing.name).toEqual('Brazil');
+                netherlandsModel.playing = 'England';
+                expect(netherlandsModel.playing.name).toEqual('England');
 
-            netherlandsModel.playing = 'Non-existent';
-            expect(netherlandsModel.playing.name).toBeUndefined();
+                catwalk.deleteModel('team', englandModel);
+                expect(netherlandsModel.playing.name).toBeUndefined();
 
-            netherlandsModel.playing = 'Netherlands';
-            expect(netherlandsModel.playing.name).toEqual('Netherlands');
+                netherlandsModel.playing = 'Non-existent';
+                expect(netherlandsModel.playing.name).toBeUndefined();
 
-        }));
+                netherlandsModel.playing = 'Netherlands';
+                expect(netherlandsModel.playing.name).toEqual('Netherlands');
 
-        it('Should be able to define a hasMany relationship;', inject(function(catwalk) {
+            }));
 
-            catwalk.collection('team', {
-                name: catwalk.attribute.string(),
-                inGroup: catwalk.relationship.hasMany({
-                    collection: 'team',
-                    foreignKey: 'name'
-                })
-            });
+        });
 
-            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', inGroup: ['Brazil', 'England'] }),
-                brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                englandModel     = catwalk.createModel('team', { name: 'England' });
+        describe('Has Many', function() {
 
-            expect(typeof netherlandsModel.inGroup).toBe('object');
-            expect(typeof brazilModel.inGroup).toBe('object');
-            expect(typeof englandModel.inGroup).toBe('object');
+            it('Should be able to define a hasMany relationship;', inject(function(catwalk) {
 
-            expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
-            expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
-            expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    inGroup: catwalk.relationship.hasMany({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
 
-            expect(netherlandsModel.inGroup.length).toEqual(2);
-            expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
-            expect(netherlandsModel.inGroup[1].name).toEqual('England');
+                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', inGroup: ['Brazil', 'England'] }),
+                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                    englandModel     = catwalk.createModel('team', { name: 'England' });
 
-        }));
+                expect(typeof netherlandsModel.inGroup).toBe('object');
+                expect(typeof brazilModel.inGroup).toBe('object');
+                expect(typeof englandModel.inGroup).toBe('object');
+
+                expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
+                expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
+                expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+
+                expect(netherlandsModel.inGroup.length).toEqual(2);
+                expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
+                expect(netherlandsModel.inGroup[1].name).toEqual('England');
+
+            }));
+
+            it('Should be able to update a hasMany relationship;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    inGroup: catwalk.relationship.hasMany({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
+
+                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands' }),
+                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                    englandModel     = catwalk.createModel('team', { name: 'England' });
+
+                expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
+                expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
+                expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+
+            }));
+
+        });
 
     });
 
