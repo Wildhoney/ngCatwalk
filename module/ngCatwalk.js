@@ -6,12 +6,11 @@
     var app = $angular.module('ngCatwalk', ['ngCrossfilter']);
 
     /**
-     * @method _throwException
+     * @method throwException
      * @param message {String}
      * @return {void}
-     * @private
      */
-    var _throwException = function _throwException(message) {
+    var throwException = function throwException(message) {
         throw "ngCatwalk: " + message + ".";
     };
 
@@ -497,7 +496,7 @@
                     for (var property in model) {
 
                         if (model.hasOwnProperty(property)) {
-                            iteratorFunction(property);
+                            iteratorFunction.call(this, property);
                         }
 
                     }
