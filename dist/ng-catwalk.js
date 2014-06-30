@@ -193,7 +193,35 @@
                         }
                     } );
                 },
-                createHasManyRelationship: function createHasManyRelationship( model, fromCollectionName, fromProperty, toCollectionName, toProperty, value ) {},
+                createHasManyRelationship: function createHasManyRelationship( model, property, foreignCollection, foreignKey ) {
+                    var internalId = model[ this._primaryName ],
+                        store = this._relationshipStore;
+                    store[ internalId ][ property ] = model[ property ] || [];
+                    var inArray = function inArray( expected, actual ) {
+                        return expected.indexOf( actual ) !== -1;
+                    };
+                    $object.defineProperty( model, property, {
+                        get: function get() {
+                            foreignCollection.filterBy( foreignKey, store[ internalId ][ property ], inArray );
+                            var foreignModels = foreignCollection.collection( Infinity );
+                            foreignCollection.unfilterAll();
+                            foreignModels.add = function add( value ) {
+                                store[ internalId ][ property ].push( value );
+                            };
+                            foreignModels.remove = function remove( value ) {
+                                var index = store[ internalId ][ property ].indexOf( value );
+                                store[ internalId ][ property ].splice( index, 1 );
+                            };
+                            foreignModels.has = function has( value ) {
+                                return store[ internalId ][ property ].indexOf( value ) !== -1;
+                            };
+                            return foreignModels;
+                        },
+                        set: function set( value ) {
+                            console.log( 'Here' );
+                        }
+                    } );
+                },
                 cleanModel: function cleanModel( collectionName, model ) {
                     var primaryKey = this._primaryName,
                         blueprint = this.collection( collectionName ).blueprint,
