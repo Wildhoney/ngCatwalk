@@ -207,6 +207,15 @@ describe('ngCatwalk', function() {
                 expect(netherlandsModel.inGroup.length).toEqual(2);
                 expect(netherlandsModel.inGroup.has('England')).toBeTruthy();
 
+                netherlandsModel.inGroup.remove('England');
+                expect(netherlandsModel.inGroup.length).toEqual(1);
+
+                netherlandsModel.inGroup = 'England';
+                expect(netherlandsModel.inGroup.length).toEqual(2);
+
+                netherlandsModel.inGroup = 'England';
+                expect(netherlandsModel.inGroup.length).toEqual(2);
+
             }));
 
         });

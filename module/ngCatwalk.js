@@ -650,8 +650,7 @@
                          * @return {void}
                          */
                         set: function set(value) {
-                            console.log('Here');
-//                            store[internalId][property] = value;
+                            store[internalId][property].push(value);
                         }
 
                     });
