@@ -105,6 +105,9 @@ describe('ngCatwalk', function() {
                 expect(netherlandsModel.playing.name).toEqual('Brazil');
                 expect(brazilModel.playing.name).toEqual('Netherlands');
 
+                catwalk.deleteModel('team', brazilModel);
+                expect(netherlandsModel.playing.name).toEqual();
+
             }));
 
             it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
@@ -206,6 +209,8 @@ describe('ngCatwalk', function() {
                 netherlandsModel.inGroup.add('Algeria');
                 expect(netherlandsModel.inGroup.length).toEqual(2);
                 expect(netherlandsModel.inGroup.has('England')).toBeTruthy();
+                expect(netherlandsModel.inGroup.has('France')).toBeFalsy();
+                expect(netherlandsModel.inGroup.has('Algeria')).toBeTruthy();
 
                 netherlandsModel.inGroup.remove('England');
                 expect(netherlandsModel.inGroup.length).toEqual(1);
@@ -215,6 +220,12 @@ describe('ngCatwalk', function() {
 
                 netherlandsModel.inGroup = 'England';
                 expect(netherlandsModel.inGroup.length).toEqual(2);
+
+                var algeriaModel = catwalk.createModel('team', { name: 'Algeria' });
+                expect(netherlandsModel.inGroup.length).toEqual(3);
+                catwalk.deleteModel('team', algeriaModel);
+                expect(netherlandsModel.inGroup.length).toEqual(2);
+                expect(netherlandsModel.inGroup.has('Algeria')).toBeFalsy();
 
             }));
 

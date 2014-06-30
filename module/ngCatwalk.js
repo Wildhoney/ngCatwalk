@@ -170,7 +170,14 @@
              * @submodule Catwalk
              * @constructor
              */
-            function Catwalk() {}
+            function Catwalk() {
+
+                // Reset all of our properties.
+                this._collections       = {};
+                this._relationships     = {};
+                this._relationshipStore = {};
+
+            }
 
             /**
              * @property prototype
@@ -223,6 +230,12 @@
                 _relationshipStore: {},
 
                 /**
+                 * @property _relationships
+                 * @type {Object}
+                 */
+                _relationships: {},
+
+                /**
                  * @property _silent
                  * @type {Boolean}
                  */
@@ -233,6 +246,12 @@
                  * @type {String}
                  */
                 _eventName: 'catwalk/{{type}}/{{collection}}',
+
+                /**
+                 * @property _relationshipName
+                 * @type {String}
+                 */
+                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
 
                 /**
                  * @property _collections
@@ -419,6 +438,9 @@
                     promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
                     promise.catch(this.rejectDeleteModel(collectionName, model).bind(this));
 
+                    // Update relationships to remove any ghost references.
+                    this.flushRelationships(collectionName, model);
+
                     return model;
 
                 },
@@ -497,12 +519,40 @@
                         store             = this._relationshipStore,
                         internalId        = model[this._primaryName];
 
-                    if (typeof store[internalId] === 'undefined') {
+                    /**
+                     * @method storeRelationship
+                     * @return {void}
+                     */
+                    (function storeRelationship() {
 
-                        // Create the relationship store for the model if it doesn't exist already.
-                        store[internalId] = {};
+                        var record = {
+                            localCollection:   collectionName,
+                            localProperty:     property,
+                            foreignCollection: options.collection,
+                            foreignProperty:   options.foreignKey
+                        };
 
-                    }
+                        // Store the relationship meta data for flushing purposes.
+                        var key = $interpolate(this._relationshipName)(record);
+                        this._relationships[key] = record;
+
+                    }.bind(this))();
+
+                    /**
+                     * @method recursivelyCreateRelationshipStore
+                     * @return {void}
+                     */
+                    (function recursivelyCreateRelationshipStore() {
+
+                        if (typeof store[collectionName] === 'undefined') {
+                            store[collectionName] = {};
+                        }
+
+                        if (typeof store[collectionName][internalId] === 'undefined') {
+                            store[collectionName][internalId] = {};
+                        }
+
+                    })();
 
                     var method = 'throwRelationshipException';
 
@@ -516,7 +566,52 @@
 
                     }
 
-                    this[method](model, property, foreignCollection, options.foreignKey);
+                    this[method](collectionName, model, property, foreignCollection, options.foreignKey);
+
+                },
+
+                /**
+                 * @method flushRelationships
+                 * @param modifiedCollectionName {String}
+                 * @param model {Object}
+                 * @return {void}
+                 */
+                flushRelationships: function flushRelationships(modifiedCollectionName, model) {
+
+                    this._propertyIterator(this._relationships, function iterator(property) {
+
+                        var relationshipData = this._relationships[property];
+
+                        // Current relationship is of no concern if it doesn't pertain to the collection
+                        // that has been modified.
+                        if (relationshipData.foreignCollection !== modifiedCollectionName) {
+                            return;
+                        }
+
+                        // Locate the value from the modified model that needs to be removed from any
+                        // relevant relationships.
+                        var valueToDelete    = model[relationshipData.foreignProperty],
+                            models           = this.collection(relationshipData.localCollection),
+                            relationshipType = this.getRelationshipType(relationshipData.localCollection, relationshipData.localProperty);
+
+                        // Iterate over each model to remove the `valueToDelete` from the relationship.
+                        for (var index = 0; index < models.length; index++) {
+
+                            switch (relationshipType) {
+
+                                case ('Many'):
+                                    models[index][relationshipData.localProperty].remove(valueToDelete);
+                                    break;
+
+                                case ('One'):
+                                    models[index][relationshipData.localProperty] = '';
+                                    break;
+
+                            }
+
+                        }
+
+                    });
 
                 },
 
@@ -530,19 +625,20 @@
 
                 /**
                  * @method createHasOneRelationship
+                 * @param collectionName {String}
                  * @param model {Object}
                  * @param property {String}
                  * @param foreignCollection {Array}
                  * @param foreignKey {String}
                  * @return {Boolean}
                  */
-                createHasOneRelationship: function createHasOneRelationship(model, property, foreignCollection, foreignKey) {
+                createHasOneRelationship: function createHasOneRelationship(collectionName, model, property, foreignCollection, foreignKey) {
 
                     var internalId = model[this._primaryName],
                         store      = this._relationshipStore;
 
                     // Attach the property to the model relationship store.
-                    store[internalId][property] = model[property] || '';
+                    store[collectionName][internalId][property] = model[property] || '';
 
                     $object.defineProperty(model, property, {
 
@@ -553,7 +649,7 @@
                         get: function get() {
 
                             // Filter the foreign collection by the value we've defined on the local model.
-                            foreignCollection.filterBy(foreignKey, store[internalId][property]);
+                            foreignCollection.filterBy(foreignKey, store[collectionName][internalId][property]);
                             var foreignModel = foreignCollection[0];
                             foreignCollection.unfilterAll();
                             return foreignModel;
@@ -566,7 +662,7 @@
                          * @return {void}
                          */
                         set: function set(value) {
-                            store[internalId][property] = value;
+                            store[collectionName][internalId][property] = value;
                         }
 
                     });
@@ -575,19 +671,20 @@
 
                 /**
                  * @method createHasManyRelationship
+                 * @param collectionName {String}
                  * @param model {Object}
                  * @param property {String}
                  * @param foreignCollection {Array}
                  * @param foreignKey {String}
                  * @return {Boolean}
                  */
-                createHasManyRelationship: function createHasManyRelationship(model, property, foreignCollection, foreignKey) {
+                createHasManyRelationship: function createHasManyRelationship(collectionName, model, property, foreignCollection, foreignKey) {
 
                     var internalId = model[this._primaryName],
                         store      = this._relationshipStore;
 
                     // Attach the property to the model relationship store.
-                    store[internalId][property] = model[property] || [];
+                    store[collectionName][internalId][property] = model[property] || [];
 
                     /**
                      * @method inArray
@@ -608,7 +705,7 @@
                         get: function get() {
 
                             // Fetch all of the models that pertain to our relationship array.
-                            foreignCollection.filterBy(foreignKey, store[internalId][property], inArray);
+                            foreignCollection.filterBy(foreignKey, store[collectionName][internalId][property], inArray);
                             var foreignModels = foreignCollection.collection(Infinity);
                             foreignCollection.unfilterAll();
 
@@ -618,7 +715,11 @@
                              * @return {void}
                              */
                             foreignModels.add = function add(value) {
-                                store[internalId][property].push(value);
+
+                                if (!foreignModels.has(value)) {
+                                    store[collectionName][internalId][property].push(value);
+                                }
+
                             };
 
                             /**
@@ -627,8 +728,13 @@
                              * @return {void}
                              */
                             foreignModels.remove = function remove(value) {
-                                var index = store[internalId][property].indexOf(value);
-                                store[internalId][property].splice(index, 1);
+
+                                var index = store[collectionName][internalId][property].indexOf(value);
+
+                                if (index !== -1) {
+                                    store[collectionName][internalId][property].splice(index, 1);
+                                }
+
                             };
 
                             /**
@@ -637,7 +743,7 @@
                              * @return {Boolean}
                              */
                             foreignModels.has = function has(value) {
-                                return store[internalId][property].indexOf(value) !== -1;
+                                return store[collectionName][internalId][property].indexOf(value) !== -1;
                             };
 
                             return foreignModels;
@@ -650,7 +756,11 @@
                          * @return {void}
                          */
                         set: function set(value) {
-                            store[internalId][property].push(value);
+
+                            if (store[collectionName][internalId][property].indexOf(value) === -1) {
+                                store[collectionName][internalId][property].push(value);
+                            }
+
                         }
 
                     });
