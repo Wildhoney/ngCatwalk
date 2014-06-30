@@ -233,36 +233,37 @@
                     var internalId = model[ this._primaryName ],
                         store = this._relationshipStore;
                     store[ collectionName ][ internalId ][ property ] = model[ property ] || [];
+                    var entry = store[ collectionName ][ internalId ][ property ];
                     var inArray = function inArray( expected, actual ) {
                         return expected.indexOf( actual ) !== -1;
                     };
                     $object.defineProperty( model, property, {
                         get: function get() {
-                            foreignCollection.filterBy( foreignKey, store[ collectionName ][ internalId ][ property ], inArray );
+                            foreignCollection.filterBy( foreignKey, entry, inArray );
                             var foreignModels = foreignCollection.collection( Infinity );
                             foreignCollection.unfilterAll();
                             foreignModels.add = function add( value ) {
                                 if ( !foreignModels.has( value ) ) {
-                                    store[ collectionName ][ internalId ][ property ].push( value );
+                                    entry.push( value );
                                 }
                             };
                             foreignModels.remove = function remove( value ) {
-                                var index = store[ collectionName ][ internalId ][ property ].indexOf( value );
+                                var index = entry.indexOf( value );
                                 if ( index !== -1 ) {
-                                    store[ collectionName ][ internalId ][ property ].splice( index, 1 );
+                                    entry.splice( index, 1 );
                                 }
                             };
                             foreignModels.clear = function clear() {
-                                store[ collectionName ][ internalId ][ property ] = [];
+                                entry = [];
                             };
                             foreignModels.has = function has( value ) {
-                                return store[ collectionName ][ internalId ][ property ].indexOf( value ) !== -1;
+                                return entry.indexOf( value ) !== -1;
                             };
                             return foreignModels;
                         },
                         set: function set( value ) {
-                            if ( store[ collectionName ][ internalId ][ property ].indexOf( value ) === -1 ) {
-                                store[ collectionName ][ internalId ][ property ].push( value );
+                            if ( entry.indexOf( value ) === -1 ) {
+                                entry.push( value );
                             }
                         }
                     } );
