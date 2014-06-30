@@ -104,7 +104,11 @@
                     return function resolvePromise() {};
                 },
                 rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
-                    return function rejectPromise() {};
+                    return function rejectPromise() {
+                        this.silently( function silentlyRestore() {
+                            this.collection( collectionName ).restoreModel( model );
+                        } );
+                    };
                 },
                 createPromise: function createPromise( collectionName, type, args ) {
                     var deferred = $q.defer();
