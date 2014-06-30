@@ -227,15 +227,9 @@
                     this.collection(collectionName).addModel(model);
                     var promise = this.createPromise(collectionName, 'create', [model]);
 
-                    // When the promise has been resolved.
-                    promise.then(function andThen(properties) {
-                        this.resolveCreateModel(collectionName, model, properties);
-                    }.bind(this));
-                    
-                    // When the promise has been rejected.
-                    promise.catch(function andCatch() {
-                        this.rejectCreateModel(collectionName, model);
-                    }.bind(this));
+                    // Promise resolution.
+                    promise.then(this.resolveCreateModel(collectionName, model).bind(this));
+                    promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
 
                     return model;
 
@@ -245,13 +239,17 @@
                  * @method rejectCreateModel
                  * @param collectionName {String}
                  * @param model {Object}
-                 * @return {void}
+                 * @return {Function}
                  */
                 rejectCreateModel: function rejectCreateModel(collectionName, model) {
 
-                    this.silently(function silentlyDelete() {
-                        this.collection(collectionName).deleteModel(model);
-                    });
+                    return function() {
+
+                        this.silently(function silentlyDelete() {
+                            this.collection(collectionName).deleteModel(model);
+                        });
+
+                    };
 
                 },
 
@@ -260,27 +258,31 @@
                  * @param collectionName {String}
                  * @param model {Object}
                  * @param properties {Object}
-                 * @return {void}
+                 * @return {Function}
                  */
                 resolveCreateModel: function resolveCreateModel(collectionName, model, properties) {
 
-                    var blueprint = this.collection(collectionName).blueprint;
+                    return function(properties) {
 
-                    this._propertyIterator(properties, function iterator(property) {
+                        var blueprint = this.collection(collectionName).blueprint;
 
-                        var typecast = blueprint[property];
+                        this._propertyIterator(properties, function iterator(property) {
 
-                        // Don't add properties to the model if it hasn't been defined in
-                        // the blueprint.
-                        if (typeof typecast === 'undefined') {
-                            return;
-                        }
+                            var typecast = blueprint[property];
 
-                        // Overwrite the value with the one specified in the resolution of
-                        // the related promise.
-                        model[property] = typecast(properties[property]);
+                            // Don't add properties to the model if it hasn't been defined in
+                            // the blueprint.
+                            if (typeof typecast === 'undefined') {
+                                return;
+                            }
 
-                    });
+                            // Overwrite the value with the one specified in the resolution of
+                            // the related promise.
+                            model[property] = typecast(properties[property]);
+
+                        });
+
+                    };
 
                 },
 
@@ -323,6 +325,22 @@
                  * @return {Object}
                  */
                 deleteModel: function deleteModel(collectionName, model) {
+
+                    // Add the model to the collection and generate the promise.
+                    this.collection(collectionName).deleteModel(model);
+                    var promise = this.createPromise(collectionName, 'create', [model]);
+
+                    // When the promise has been resolved.
+                    promise.then(function andThen() {
+                        this.resolveDeleteModel(collectionName, model);
+                    }.bind(this));
+
+                    // When the promise has been rejected.
+                    promise.catch(function andCatch() {
+                        this.rejectCreateModel(collectionName, model);
+                    }.bind(this));
+
+                    return model;
 
                 },
 
