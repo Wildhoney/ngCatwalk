@@ -652,7 +652,7 @@
                             foreignCollection.filterBy(foreignKey, store[collectionName][internalId][property]);
                             var foreignModel = foreignCollection[0];
                             foreignCollection.unfilterAll();
-                            return foreignModel;
+                            return foreignModel || "Adam";
 
                         },
 
@@ -735,6 +735,14 @@
                                     store[collectionName][internalId][property].splice(index, 1);
                                 }
 
+                            };
+
+                            /**
+                             * @method clear
+                             * @return {void}
+                             */
+                            foreignModels.clear = function clear() {
+                                store[collectionName][internalId][property] = [];
                             };
 
                             /**

@@ -2,6 +2,25 @@ describe('ngCatwalk', function() {
 
     beforeEach(module('ngCatwalk', 'ngCrossfilter'));
 
+    describe('Collections', function() {
+
+        it('Should be able to define collections;', inject(function(catwalk) {
+
+            catwalk.collection('team', {
+                name:         catwalk.attribute.any(),
+                colour:       catwalk.attribute.string('none'),
+                worldCupWins: catwalk.attribute.number()
+            });
+
+            expect(typeof catwalk._collections.unknown).toEqual('undefined');
+            expect(typeof catwalk.collection('unknown')).toEqual('object');
+            expect(typeof catwalk._collections.team).toEqual('object');
+            expect(typeof catwalk.collection('team')).toEqual('object');
+
+        }));
+
+    });
+
     describe('Attributes', function() {
 
         it('Should be able to provide default values;', inject(function(catwalk) {
@@ -110,6 +129,39 @@ describe('ngCatwalk', function() {
 
             }));
 
+            it('Should be able to define a hasOne relationship to another collection;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    manager: catwalk.relationship.hasOne({
+                        collection: 'manager',
+                        foreignKey: 'name'
+                    })
+                });
+
+                catwalk.collection('manager', {
+                    name: catwalk.attribute.string()
+                });
+
+                var englandModel    = catwalk.createModel('team', { name: 'England', manager: 'Roy Hodgson' }),
+                    royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+
+                expect(catwalk.collection('team').length).toEqual(1);
+                expect(catwalk.collection('manager').length).toEqual(1);
+
+                expect(englandModel.manager.name).toEqual('Roy Hodgson');
+
+                catwalk.deleteModel('manager', royHodgsonModel);
+                expect(englandModel.manager.name).toEqual();
+
+                royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+                expect(englandModel.manager.name).toEqual();
+
+                englandModel.manager = 'Roy Hodgson';
+                expect(englandModel.manager.name).toEqual('Roy Hodgson');
+
+            }));
+
             it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
 
                 catwalk.collection('team', {
@@ -178,6 +230,43 @@ describe('ngCatwalk', function() {
 
             }));
 
+            it('Should be able to define a hasMany relationship to another collection;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name: catwalk.attribute.string(),
+                    players: catwalk.relationship.hasMany({
+                        collection: 'player',
+                        foreignKey: 'name'
+                    })
+                });
+
+                catwalk.collection('player', {
+                    name: catwalk.attribute.string()
+                });
+
+                var players             = ['Leighton Baines', 'Steven Gerrard'],
+                    englandModel        = catwalk.createModel('team', { name: 'England', players: players });
+
+                catwalk.createModel('player', { name: 'Leighton Baines' });
+                catwalk.createModel('player', { name: 'Steven Gerrard' });
+
+                expect(englandModel.players.length).toEqual(2);
+                expect(englandModel.players[0].name).toEqual('Leighton Baines');
+                expect(englandModel.players[1].name).toEqual('Steven Gerrard');
+
+                englandModel.players.remove('Leighton Baines');
+                expect(englandModel.players.length).toEqual(1);
+                expect(englandModel.players[0].name).toEqual('Steven Gerrard');
+                expect(englandModel.players[1]).toBeUndefined();
+
+                englandModel.players.clear();
+                expect(englandModel.players.length).toEqual(0);
+                englandModel.players = 'Steven Gerrard';
+                expect(englandModel.players.length).toEqual(1);
+                expect(englandModel.players[0].name).toEqual('Steven Gerrard');
+
+            }));
+
             it('Should be able to update a hasMany relationship;', inject(function(catwalk) {
 
                 catwalk.collection('team', {
@@ -230,25 +319,6 @@ describe('ngCatwalk', function() {
             }));
 
         });
-
-    });
-
-    describe('Collection', function() {
-
-        it('Should be able to define collections;', inject(function(catwalk) {
-
-            catwalk.collection('team', {
-                name:         catwalk.attribute.any(),
-                colour:       catwalk.attribute.string('none'),
-                worldCupWins: catwalk.attribute.number()
-            });
-
-            expect(typeof catwalk._collections.unknown).toEqual('undefined');
-            expect(typeof catwalk.collection('unknown')).toEqual('object');
-            expect(typeof catwalk._collections.team).toEqual('object');
-            expect(typeof catwalk.collection('team')).toEqual('object');
-
-        }));
 
     });
 
@@ -394,7 +464,7 @@ describe('ngCatwalk', function() {
                 });
 
                 var model = catwalk.createModel('team', {
-                    name: 'Iceland',
+                    name:   'Iceland',
                     colour: 'Blue'
                 });
 
