@@ -390,37 +390,37 @@
 
                 },
 
-                /**
-                 * @method updateModel
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param properties {Object}
-                 * @return {Object}
-                 */
-                updateModel: function updateModel(collectionName, model, properties) {
-
-                },
-
-                /**
-                 * @method resolveUpdateModel
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @return {Object}
-                 */
-                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
-
-                },
-
-                /**
-                 * @method rejectUpdateModel
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param oldProperties {Object}
-                 * @return {Object}
-                 */
-                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
-
-                },
+//                /**
+//                 * @method updateModel
+//                 * @param collectionName {String}
+//                 * @param model {Object}
+//                 * @param properties {Object}
+//                 * @return {Object}
+//                 */
+//                updateModel: function updateModel(collectionName, model, properties) {
+//
+//                },
+//
+//                /**
+//                 * @method resolveUpdateModel
+//                 * @param collectionName {String}
+//                 * @param model {Object}
+//                 * @return {Object}
+//                 */
+//                resolveUpdateModel: function resolveUpdateModel(collectionName, model) {
+//
+//                },
+//
+//                /**
+//                 * @method rejectUpdateModel
+//                 * @param collectionName {String}
+//                 * @param model {Object}
+//                 * @param oldProperties {Object}
+//                 * @return {Object}
+//                 */
+//                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
+//
+//                },
 
                 /**
                  * @method deleteModel
@@ -435,7 +435,7 @@
                     var promise = this.createPromise(collectionName, 'delete', [model]);
 
                     // Promise resolution.
-                    promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
+//                    promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
                     promise.catch(this.rejectDeleteModel(collectionName, model).bind(this));
 
                     // Update relationships to remove any ghost references.
@@ -445,17 +445,17 @@
 
                 },
 
-                /**
-                 * @method resolveDeleteModel
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @return {Object}
-                 */
-                resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
-
-                    return function resolvePromise() {};
-
-                },
+//                /**
+//                 * @method resolveDeleteModel
+//                 * @param collectionName {String}
+//                 * @param model {Object}
+//                 * @return {Object}
+//                 */
+//                resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
+//
+//                    return function resolvePromise() {};
+//
+//                },
 
                 /**
                  * @method rejectDeleteModel
