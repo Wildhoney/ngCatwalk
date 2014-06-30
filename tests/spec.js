@@ -2,7 +2,7 @@ describe('ngCatwalk', function() {
 
     beforeEach(module('ngCatwalk', 'ngCrossfilter'));
 
-    describe('Typecasting', function() {
+    describe('Attributes', function() {
 
         it('Should be able to provide default values;', inject(function(catwalk) {
 
@@ -49,6 +49,30 @@ describe('ngCatwalk', function() {
 
             expect(firstAutoIncrementAttribute()).toEqual(4);
             expect(secondAutoIncrementAttribute()).toEqual(2);
+
+        }));
+
+    });
+
+    describe('Relationships', function() {
+
+        it('Should be able to define relationships;', inject(function(catwalk) {
+
+            catwalk.collection('team', {
+                name: catwalk.attribute.string(),
+                playing: catwalk.relationship.hasOne({
+                    collection: 'team',
+                    foreignKey: 'name'
+                })
+            });
+
+            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                brazilModel      = catwalk.createModel('team', { name: 'Brazil', playing: 'Netherlands' });
+
+            expect(netherlandsModel.playing).toBeDefined();
+            expect(brazilModel.playing).toBeDefined();
+            expect(typeof netherlandsModel.playing).toBe('string');
+            expect(typeof brazilModel.playing).toBe('string');
 
         }));
 

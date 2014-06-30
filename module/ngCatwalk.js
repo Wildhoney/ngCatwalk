@@ -99,6 +99,16 @@
      */
     var ngCatwalkRelationship = {
 
+        /**
+         * @method One
+         * @param options {Object}
+         * @constructor
+         */
+        One: function One(options) {
+
+
+        }
+
     };
 
     /**
@@ -139,9 +149,20 @@
 
                 /**
                  * @property relationship
-                 * @type ngCatwalkRelationship
+                 * @type {Object}
                  */
-                relationship: ngCatwalkRelationship,
+                relationship: {
+
+                    /**
+                     * @property hasOne
+                     * @param options {Object}
+                     * @return {ngCatwalkRelationship.One}
+                     */
+                    hasOne: function hasOne(options) {
+                        return new ngCatwalkRelationship.One(options);
+                    }
+
+                },
 
                 /**
                  * @property _primaryName
@@ -445,9 +466,10 @@
                  */
                 cleanModel: function cleanModel(collectionName, model) {
 
-                    var blueprint  = this.collection(collectionName).blueprint,
-                        iterator   = this._propertyIterator,
-                        primaryKey = this._primaryName;
+                    var blueprint      = this.collection(collectionName).blueprint,
+                        iterator       = this._propertyIterator,
+                        isRelationship = this.isRelationship.bind(this),
+                        primaryKey     = this._primaryName;
 
                     // Add the primary key to the model.
                     model[primaryKey] = ++this.collection(collectionName).index;
@@ -479,8 +501,6 @@
 
                         iterator(blueprint, function iterator(property) {
 
-                            var typecast = blueprint[property];
-
                             // Ignore if it's already been defined, or it's the primary key.
                             if (typeof model[property] === 'undefined' && property !== primaryKey) {
 
@@ -489,14 +509,50 @@
 
                             }
 
-                            // Typecast each property accordingly.
-                            model[property] = typecast(model[property]);
+                            if (!isRelationship(collectionName, property)) {
+
+                                var typecast = blueprint[property];
+
+                                // Typecast each property accordingly.
+                                model[property] = typecast(model[property]);
+                                return;
+
+                            }
+
+                            // Now we know we're dealing with a relationship.
 
                         });
 
                     })();
 
                     return model;
+
+                },
+
+                /**
+                 * @method isRelationship
+                 * @param collectionName {String}
+                 * @param property {String}
+                 * @return {Boolean}
+                 */
+                isRelationship: function isRelationship(collectionName, property) {
+
+                    var propertyBlueprint = this.collection(collectionName).blueprint[property],
+                        relationships     = [ngCatwalkRelationship.One];
+
+                    for (var index in relationships) {
+
+                        if (relationships.hasOwnProperty(index)) {
+
+                            if (propertyBlueprint instanceof relationships[index]) {
+                                return true;
+                            }
+
+                        }
+
+                    }
+
+                    return false;
 
                 },
 
