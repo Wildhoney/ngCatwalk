@@ -576,14 +576,12 @@
                 /**
                  * @method createHasManyRelationship
                  * @param model {Object}
-                 * @param fromCollectionName {String}
-                 * @param fromProperty {String}
-                 * @param toCollectionName {String}
-                 * @param toProperty {String}
-                 * @param value {Array}
+                 * @param property {String}
+                 * @param foreignCollection {Array}
+                 * @param foreignKey {String}
                  * @return {Boolean}
                  */
-                createHasManyRelationship: function createHasManyRelationship(model, fromCollectionName, fromProperty, toCollectionName, toProperty, value) {
+                createHasManyRelationship: function createHasManyRelationship(model, property, foreignCollection, foreignKey) {
 
                 },
 
@@ -693,7 +691,7 @@
 
                 /**
                  * @method _propertyIterator
-                 *
+                 * @return {void}
                  * @private
                  */
                 _propertyIterator: function _propertyIterator(model, iteratorFunction) {
