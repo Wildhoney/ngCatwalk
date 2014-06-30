@@ -491,7 +491,8 @@
                 createRelationship: function createRelationship(collectionName, model, property) {
 
                     var localCollection   = this.collection(collectionName),
-                        options           = localCollection.blueprint[property].getOptions(),
+                        blueprint         = localCollection.blueprint[property],
+                        options           = blueprint.getOptions(),
                         foreignCollection = this.collection(options.collection),
                         store             = this._relationshipStore,
                         internalId        = model[this._primaryName];
@@ -503,8 +504,28 @@
 
                     }
 
-                    this.createHasOneRelationship(model, property, foreignCollection, options.foreignKey);
+                    var method = 'throwRelationshipException';
 
+                    // Determine the type of the relationship, with the default being throwing an
+                    // exception to congratulate the developer on somehow managing to create an
+                    // invalid relationship.
+                    switch (this.getRelationshipType(collectionName, property)) {
+
+                        case ('One'):  method = 'createHasOneRelationship'; break;
+                        case ('Many'): method = 'createHasManyRelationship'; break;
+
+                    }
+
+                    this[method](model, property, foreignCollection, options.foreignKey);
+
+                },
+
+                /**
+                 * @method throwRelationshipException
+                 * @return {void}
+                 */
+                throwRelationshipException: function throwRelationshipException() {
+                    throwException("Congratulations! You managed to create an invalid relationship");
                 },
 
                 /**
@@ -575,11 +596,11 @@
                  */
                 cleanModel: function cleanModel(collectionName, model) {
 
-                    var primaryKey         = this._primaryName,
-                        blueprint          = this.collection(collectionName).blueprint,
-                        iterator           = this._propertyIterator,
-                        isRelationship     = this.isRelationship.bind(this),
-                        createRelationship = this.createRelationship.bind(this);
+                    var primaryKey          = this._primaryName,
+                        blueprint           = this.collection(collectionName).blueprint,
+                        iterator            = this._propertyIterator,
+                        getRelationshipType = this.getRelationshipType.bind(this),
+                        createRelationship  = this.createRelationship.bind(this);
 
                     // Add the primary key to the model.
                     model[primaryKey] = ++this.collection(collectionName).index;
@@ -619,7 +640,7 @@
 
                             }
 
-                            if (!isRelationship(collectionName, property)) {
+                            if (!getRelationshipType(collectionName, property)) {
 
                                 var typecast = blueprint[property];
 
@@ -641,29 +662,32 @@
                 },
 
                 /**
-                 * @method isRelationship
+                 * @method getRelationshipType
                  * @param collectionName {String}
                  * @param property {String}
-                 * @return {Boolean}
+                 * @return {String|null}
                  */
-                isRelationship: function isRelationship(collectionName, property) {
+                getRelationshipType: function getRelationshipType(collectionName, property) {
 
                     var propertyBlueprint = this.collection(collectionName).blueprint[property],
-                        relationships     = [ngCatwalkRelationship.One, ngCatwalkRelationship.Many];
+                        relationships     = {
+                            One: ngCatwalkRelationship.One,
+                            Many: ngCatwalkRelationship.Many
+                        };
 
                     for (var index in relationships) {
 
                         if (relationships.hasOwnProperty(index)) {
 
                             if (propertyBlueprint instanceof relationships[index]) {
-                                return true;
+                                return index;
                             }
 
                         }
 
                     }
 
-                    return false;
+                    return null;
 
                 },
 
