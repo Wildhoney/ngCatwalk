@@ -243,7 +243,7 @@
                  */
                 rejectCreateModel: function rejectCreateModel(collectionName, model) {
 
-                    return function() {
+                    return function rejectPromise() {
 
                         this.silently(function silentlyDelete() {
                             this.collection(collectionName).deleteModel(model);
@@ -257,12 +257,11 @@
                  * @method resolveCreateModel
                  * @param collectionName {String}
                  * @param model {Object}
-                 * @param properties {Object}
                  * @return {Function}
                  */
-                resolveCreateModel: function resolveCreateModel(collectionName, model, properties) {
+                resolveCreateModel: function resolveCreateModel(collectionName, model) {
 
-                    return function(properties) {
+                    return function resolvePromise(properties) {
 
                         var blueprint = this.collection(collectionName).blueprint;
 
@@ -328,17 +327,11 @@
 
                     // Add the model to the collection and generate the promise.
                     this.collection(collectionName).deleteModel(model);
-                    var promise = this.createPromise(collectionName, 'create', [model]);
+                    var promise = this.createPromise(collectionName, 'delete', [model]);
 
-                    // When the promise has been resolved.
-                    promise.then(function andThen() {
-                        this.resolveDeleteModel(collectionName, model);
-                    }.bind(this));
-
-                    // When the promise has been rejected.
-                    promise.catch(function andCatch() {
-                        this.rejectCreateModel(collectionName, model);
-                    }.bind(this));
+                    // Promise resolution.
+                    promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
+                    promise.catch(this.rejectDeleteModel(collectionName, model).bind(this));
 
                     return model;
 
@@ -352,6 +345,8 @@
                  */
                 resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
 
+                    return function resolvePromise() {};
+
                 },
 
                 /**
@@ -361,6 +356,8 @@
                  * @return {Object}
                  */
                 rejectDeleteModel: function rejectDeleteModel(collectionName, model) {
+
+                    return function rejectPromise() {};
 
                 },
 

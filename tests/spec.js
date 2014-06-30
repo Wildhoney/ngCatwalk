@@ -154,29 +154,27 @@ describe('ngCatwalk', function() {
 
         });
 
-//        describe('Delete', function() {
-//
-//            it('Should be able to delete a model;', inject(function(catwalk) {
-//
-//                catwalk.collection('team', {
-//                    name:         catwalk.attribute.any(),
-//                    colour:       catwalk.attribute.string(),
-//                    worldCupWins: catwalk.attribute.number()
-//                });
-//
-//                var model = catwalk.createModel('team', {
-//                    name:         'Netherlands',
-//                    worldCupWins: '0',
-//                    manager:      'Louis van Gaal'
-//                });
-//
-//                expect(catwalk.collection('team').length).toEqual(1);
-//                catwalk.deleteModel('team', model);
-//                expect(catwalk.collection('team').length).toEqual(0);
-//
-//            }));
-//
-//        });
+        describe('Delete', function() {
+
+            it('Should be able to delete a model;', inject(function(catwalk) {
+
+                catwalk.collection('team', {
+                    name:         catwalk.attribute.any(),
+                    colour:       catwalk.attribute.string(),
+                    worldCupWins: catwalk.attribute.number()
+                });
+
+                var model = catwalk.createModel('team', {
+                    name: 'Netherlands'
+                });
+
+                expect(catwalk.collection('team').length).toEqual(1);
+                catwalk.deleteModel('team', model);
+                expect(catwalk.collection('team').length).toEqual(0);
+
+            }));
+
+        });
 
     });
 
