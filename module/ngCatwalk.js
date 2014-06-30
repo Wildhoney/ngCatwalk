@@ -1,4 +1,4 @@
-(function ngCatwalk($angular) {
+(function ngCatwalk($angular, $object) {
 
     "use strict";
 
@@ -106,6 +106,13 @@
          */
         One: function One(options) {
 
+            /**
+             * @method getOptions
+             * @return {Object}
+             */
+            this.getOptions = function getOptions() {
+                return options;
+            }
 
         }
 
@@ -169,6 +176,12 @@
                  * @type {String}
                  */
                 _primaryName: '_catwalkId',
+
+                /**
+                 * @property _relationshipStores
+                 * @type {Object}
+                 */
+                _relationshipStores: {},
 
                 /**
                  * @property _silent
@@ -466,10 +479,11 @@
                  */
                 cleanModel: function cleanModel(collectionName, model) {
 
-                    var blueprint      = this.collection(collectionName).blueprint,
-                        iterator       = this._propertyIterator,
-                        isRelationship = this.isRelationship.bind(this),
-                        primaryKey     = this._primaryName;
+                    var primaryKey         = this._primaryName,
+                        blueprint          = this.collection(collectionName).blueprint,
+                        iterator           = this._propertyIterator,
+                        isRelationship     = this.isRelationship.bind(this),
+                        createRelationship = this.createRelationship.bind(this);
 
                     // Add the primary key to the model.
                     model[primaryKey] = ++this.collection(collectionName).index;
@@ -520,12 +534,68 @@
                             }
 
                             // Now we know we're dealing with a relationship.
+                            createRelationship(collectionName, model, property);
 
                         });
 
                     })();
 
                     return model;
+
+                },
+
+                /**
+                 * @method createRelationship
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @param property {String}
+                 * @return {void}
+                 */
+                createRelationship: function createRelationship(collectionName, model, property) {
+
+                    var localCollection   = this.collection(collectionName),
+                        options           = localCollection.blueprint[property].getOptions(),
+                        foreignCollection = this.collection(options.collection),
+                        store             = this._relationshipStores,
+                        internalId        = model[this._primaryName];
+
+                    if (typeof store[internalId] === 'undefined') {
+
+                        // Create the relationship store for the model if it doesn't exist already.
+                        store[internalId] = {};
+
+                    }
+
+                    // Attach the property to the model relationship store.
+                    store[internalId][property] = model[property] || '';
+
+                    $object.defineProperty(model, property, {
+
+                        /**
+                         * @method get
+                         * @return {Object}
+                         */
+                        get: function get() {
+
+                            // Filter the foreign collection by the value we've defined on the local model.
+                            foreignCollection.filterBy(options.foreignKey, store[internalId][property]);
+                            var foreignModel = foreignCollection[0];
+                            foreignCollection.unfilterAll();
+                            return foreignModel;
+
+                        },
+
+                        /**
+                         * @method set
+                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
+                         * @return {void}
+                         */
+                        set: function set(value) {
+                            store[internalId][property] = value;
+                        }
+
+                    });
+
 
                 },
 
@@ -579,4 +649,4 @@
 
         }]);
 
-})(window.angular);
+})(window.angular, window.Object);

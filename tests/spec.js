@@ -71,8 +71,51 @@ describe('ngCatwalk', function() {
 
             expect(netherlandsModel.playing).toBeDefined();
             expect(brazilModel.playing).toBeDefined();
-            expect(typeof netherlandsModel.playing).toBe('string');
-            expect(typeof brazilModel.playing).toBe('string');
+
+        }));
+
+        it('Should be able to define a hasOne relationship;', inject(function(catwalk) {
+
+            catwalk.collection('team', {
+                name: catwalk.attribute.string(),
+                playing: catwalk.relationship.hasOne({
+                    collection: 'team',
+                    foreignKey: 'name'
+                })
+            });
+
+            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                brazilModel      = catwalk.createModel('team', { name: 'Brazil', playing: 'Netherlands' });
+
+            expect(typeof netherlandsModel.playing).toBe('object');
+            expect(typeof brazilModel.playing).toBe('object');
+
+            expect(netherlandsModel.playing.name).toEqual('Brazil');
+            expect(brazilModel.playing.name).toEqual('Netherlands');
+
+        }));
+
+        it('Should be able to update a hasOne relationship;', inject(function(catwalk) {
+
+            catwalk.collection('team', {
+                name: catwalk.attribute.string(),
+                playing: catwalk.relationship.hasOne({
+                    collection: 'team',
+                    foreignKey: 'name'
+                })
+            });
+
+            var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                englandModel     = catwalk.createModel('team', { name: 'England' });
+
+            expect(typeof netherlandsModel.playing).toBe('object');
+            expect(typeof brazilModel.playing).toBe('object');
+            expect(typeof englandModel.playing).toBe('object');
+
+            expect(netherlandsModel.playing.name).toEqual('Brazil');
+            netherlandsModel.playing = 'England';
+            expect(netherlandsModel.playing.name).toEqual('England');
 
         }));
 
