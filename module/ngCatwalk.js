@@ -428,9 +428,6 @@
                     promise.then(this.resolveUpdateModel(collectionName, model, updatedProperties).bind(this));
                     promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
 
-                    // Update relationships to remove any ghost references.
-                    this.pruneRelationships(collectionName, updatedProperties);
-
                     return model;
 
                 },
@@ -445,8 +442,6 @@
                 resolveUpdateModel: function resolveUpdateModel(collectionName, model, updatedProperties) {
 
                     return function resolvePromise() {
-
-                        console.log("Never gets here?");
 
                         // Update relationships to remove any ghost references.
                         this.pruneRelationships(collectionName, updatedProperties);

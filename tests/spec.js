@@ -131,6 +131,10 @@ describe('ngCatwalk', function() {
 
             it('Should be able to define a hasOne relationship to another collection;', inject(function($rootScope, catwalk) {
 
+                $rootScope.$on('catwalk/update/manager', function(event, deferred) {
+                    deferred.resolve();
+                });
+
                 catwalk.collection('team', {
                     name: catwalk.attribute.string(),
                     manager: catwalk.relationship.hasOne({
@@ -163,11 +167,13 @@ describe('ngCatwalk', function() {
                 catwalk.updateModel('manager', royHodgsonModel, {
                     name: 'Gary Linekar'
                 });
+                $rootScope.$digest();
                 expect(englandModel.manager.name).toEqual();
 
                 catwalk.updateModel('manager', royHodgsonModel, {
                     name: 'Roy Hodgson'
                 });
+                $rootScope.$digest();
                 expect(englandModel.manager.name).toEqual();
 
                 englandModel.manager = 'Roy Hodgson';
@@ -176,6 +182,10 @@ describe('ngCatwalk', function() {
             }));
 
             it('Should be able to update a hasOne relationship;', inject(function($rootScope, catwalk) {
+
+                $rootScope.$on('catwalk/update/team', function(event, deferred) {
+                    deferred.resolve();
+                });
 
                 catwalk.collection('team', {
                     name: catwalk.attribute.string(),
@@ -214,11 +224,13 @@ describe('ngCatwalk', function() {
                 catwalk.updateModel('team', brazilModel, {
                     name: 'Costa Rica'
                 });
+                $rootScope.$digest();
                 expect(netherlandsModel.playing.name).toEqual();
 
                 catwalk.updateModel('team', brazilModel, {
                     name: 'Brazil'
                 });
+                $rootScope.$digest();
                 expect(netherlandsModel.playing.name).toEqual();
                 netherlandsModel.playing = 'Brazil';
                 expect(netherlandsModel.playing.name).toEqual('Brazil');
