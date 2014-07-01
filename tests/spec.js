@@ -131,109 +131,120 @@ describe('ngCatwalk', function() {
 
             it('Should be able to define a hasOne relationship to another collection;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$on('catwalk/update/manager', function(event, deferred) {
-                    deferred.resolve();
-                });
+                $rootScope.$digest(function() {
 
-                catwalk.collection('team', {
-                    name: catwalk.attribute.string(),
-                    manager: catwalk.relationship.hasOne({
-                        collection: 'manager',
-                        foreignKey: 'name'
-                    })
-                });
+                    $rootScope.$on('catwalk/update/manager', function(event, deferred) {
+                        deferred.resolve();
+                    });
 
-                catwalk.collection('manager', {
-                    name: catwalk.attribute.string()
-                });
+                    $rootScope.$on('catwalk/delete/manager', function(event, deferred) {
+                        deferred.resolve();
+                    });
 
-                var englandModel    = catwalk.createModel('team', { name: 'England', manager: 'Roy Hodgson' }),
+                    catwalk.collection('team', {
+                        name: catwalk.attribute.string(),
+                        manager: catwalk.relationship.hasOne({
+                            collection: 'manager',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('manager', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    var englandModel    = catwalk.createModel('team', { name: 'England', manager: 'Roy Hodgson' }),
+                        royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+
+                    expect(catwalk.collection('team').length).toEqual(1);
+                    expect(catwalk.collection('manager').length).toEqual(1);
+
+                    expect(englandModel.manager.name).toEqual('Roy Hodgson');
+
+                    catwalk.deleteModel('manager', royHodgsonModel);
+                    expect(englandModel.manager.name).toEqual();
+
                     royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+                    expect(englandModel.manager.name).toEqual();
 
-                expect(catwalk.collection('team').length).toEqual(1);
-                expect(catwalk.collection('manager').length).toEqual(1);
+                    englandModel.manager = 'Roy Hodgson';
+                    expect(englandModel.manager.name).toEqual('Roy Hodgson');
 
-                expect(englandModel.manager.name).toEqual('Roy Hodgson');
+                    catwalk.updateModel('manager', royHodgsonModel, {
+                        name: 'Gary Linekar'
+                    });
 
-                catwalk.deleteModel('manager', royHodgsonModel);
-                expect(englandModel.manager.name).toEqual();
+                    expect(englandModel.manager.name).toEqual();
 
-                royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
-                expect(englandModel.manager.name).toEqual();
+                    catwalk.updateModel('manager', royHodgsonModel, {
+                        name: 'Roy Hodgson'
+                    });
 
-                englandModel.manager = 'Roy Hodgson';
-                expect(englandModel.manager.name).toEqual('Roy Hodgson');
+                    expect(englandModel.manager.name).toEqual();
 
-                catwalk.updateModel('manager', royHodgsonModel, {
-                    name: 'Gary Linekar'
+                    englandModel.manager = 'Roy Hodgson';
+                    expect(englandModel.manager.name).toEqual('Roy Hodgson');
+
                 });
-                $rootScope.$digest();
-                expect(englandModel.manager.name).toEqual();
-
-                catwalk.updateModel('manager', royHodgsonModel, {
-                    name: 'Roy Hodgson'
-                });
-                $rootScope.$digest();
-                expect(englandModel.manager.name).toEqual();
-
-                englandModel.manager = 'Roy Hodgson';
-                expect(englandModel.manager.name).toEqual('Roy Hodgson');
 
             }));
 
             it('Should be able to update a hasOne relationship;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$on('catwalk/update/team', function(event, deferred) {
-                    deferred.resolve();
+                $rootScope.$digest(function() {
+
+                    $rootScope.$on('catwalk/update/team', function(event, deferred) {
+                        deferred.resolve();
+                    });
+
+                    catwalk.collection('team', {
+                        name: catwalk.attribute.string(),
+                        playing: catwalk.relationship.hasOne({
+                            collection: 'team',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
+                        brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                        englandModel     = catwalk.createModel('team', { name: 'England' });
+
+                    expect(typeof netherlandsModel.playing).toBe('object');
+                    expect(typeof brazilModel.playing).toBe('object');
+                    expect(typeof englandModel.playing).toBe('object');
+
+                    expect(netherlandsModel.playing.name).toEqual('Brazil');
+                    netherlandsModel.playing = 'England';
+                    expect(netherlandsModel.playing.name).toEqual('England');
+
+                    catwalk.deleteModel('team', englandModel);
+                    expect(netherlandsModel.playing.name).toBeUndefined();
+
+                    netherlandsModel.playing = 'Non-existent';
+                    expect(netherlandsModel.playing.name).toBeUndefined();
+
+                    netherlandsModel.playing = 'Netherlands';
+                    expect(netherlandsModel.playing.name).toEqual('Netherlands');
+
+                    netherlandsModel.playing = 'Spain';
+                    expect(netherlandsModel.playing.name).toEqual();
+
+                    netherlandsModel.playing = 'Brazil';
+                    expect(netherlandsModel.playing.name).toEqual('Brazil');
+                    catwalk.updateModel('team', brazilModel, {
+                        name: 'Costa Rica'
+                    });
+                    expect(netherlandsModel.playing.name).toEqual();
+
+                    catwalk.updateModel('team', brazilModel, {
+                        name: 'Brazil'
+                    });
+
+                    expect(netherlandsModel.playing.name).toEqual();
+                    netherlandsModel.playing = 'Brazil';
+                    expect(netherlandsModel.playing.name).toEqual('Brazil');
+
                 });
-
-                catwalk.collection('team', {
-                    name: catwalk.attribute.string(),
-                    playing: catwalk.relationship.hasOne({
-                        collection: 'team',
-                        foreignKey: 'name'
-                    })
-                });
-
-                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
-                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                    englandModel     = catwalk.createModel('team', { name: 'England' });
-
-                expect(typeof netherlandsModel.playing).toBe('object');
-                expect(typeof brazilModel.playing).toBe('object');
-                expect(typeof englandModel.playing).toBe('object');
-
-                expect(netherlandsModel.playing.name).toEqual('Brazil');
-                netherlandsModel.playing = 'England';
-                expect(netherlandsModel.playing.name).toEqual('England');
-
-                catwalk.deleteModel('team', englandModel);
-                expect(netherlandsModel.playing.name).toBeUndefined();
-
-                netherlandsModel.playing = 'Non-existent';
-                expect(netherlandsModel.playing.name).toBeUndefined();
-
-                netherlandsModel.playing = 'Netherlands';
-                expect(netherlandsModel.playing.name).toEqual('Netherlands');
-
-                netherlandsModel.playing = 'Spain';
-                expect(netherlandsModel.playing.name).toEqual();
-
-                netherlandsModel.playing = 'Brazil';
-                expect(netherlandsModel.playing.name).toEqual('Brazil');
-                catwalk.updateModel('team', brazilModel, {
-                    name: 'Costa Rica'
-                });
-                $rootScope.$digest();
-                expect(netherlandsModel.playing.name).toEqual();
-
-                catwalk.updateModel('team', brazilModel, {
-                    name: 'Brazil'
-                });
-                $rootScope.$digest();
-                expect(netherlandsModel.playing.name).toEqual();
-                netherlandsModel.playing = 'Brazil';
-                expect(netherlandsModel.playing.name).toEqual('Brazil');
 
             }));
 
@@ -306,54 +317,62 @@ describe('ngCatwalk', function() {
 
             }));
 
-            it('Should be able to update a hasMany relationship;', inject(function(catwalk) {
+            it('Should be able to update a hasMany relationship;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name: catwalk.attribute.string(),
-                    inGroup: catwalk.relationship.hasMany({
-                        collection: 'team',
-                        foreignKey: 'name'
-                    })
+                $rootScope.$digest(function() {
+
+                    catwalk.collection('team', {
+                        name: catwalk.attribute.string(),
+                        inGroup: catwalk.relationship.hasMany({
+                            collection: 'team',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    $rootScope.$on('catwalk/delete/team', function(event, deferred) {
+                        deferred.resolve();
+                    });
+
+                    var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands' }),
+                        brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
+                        englandModel     = catwalk.createModel('team', { name: 'England' });
+
+                    expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
+                    expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
+                    expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
+
+                    expect(typeof netherlandsModel.inGroup.add).toEqual('function');
+                    netherlandsModel.inGroup.add('Brazil');
+                    expect(netherlandsModel.inGroup.length).toEqual(1);
+                    expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
+
+                    netherlandsModel.inGroup.remove('Brazil');
+                    expect(netherlandsModel.inGroup.length).toEqual(0);
+
+                    netherlandsModel.inGroup.add('Brazil');
+                    netherlandsModel.inGroup.add('England');
+                    netherlandsModel.inGroup.add('Algeria');
+                    expect(netherlandsModel.inGroup.length).toEqual(2);
+                    expect(netherlandsModel.inGroup.has('England')).toBeTruthy();
+                    expect(netherlandsModel.inGroup.has('France')).toBeFalsy();
+                    expect(netherlandsModel.inGroup.has('Algeria')).toBeTruthy();
+
+                    netherlandsModel.inGroup.remove('England');
+                    expect(netherlandsModel.inGroup.length).toEqual(1);
+
+                    netherlandsModel.inGroup = 'England';
+                    expect(netherlandsModel.inGroup.length).toEqual(2);
+
+                    netherlandsModel.inGroup = 'England';
+                    expect(netherlandsModel.inGroup.length).toEqual(2);
+
+                    var algeriaModel = catwalk.createModel('team', { name: 'Algeria' });
+                    expect(netherlandsModel.inGroup.length).toEqual(3);
+                    catwalk.deleteModel('team', algeriaModel);
+                    expect(netherlandsModel.inGroup.length).toEqual(2);
+                    expect(netherlandsModel.inGroup.has('Algeria')).toBeFalsy();
+
                 });
-
-                var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands' }),
-                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                    englandModel     = catwalk.createModel('team', { name: 'England' });
-
-                expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
-                expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
-                expect(Array.isArray(englandModel.inGroup)).toBeTruthy();
-
-                expect(typeof netherlandsModel.inGroup.add).toEqual('function');
-                netherlandsModel.inGroup.add('Brazil');
-                expect(netherlandsModel.inGroup.length).toEqual(1);
-                expect(netherlandsModel.inGroup[0].name).toEqual('Brazil');
-
-                netherlandsModel.inGroup.remove('Brazil');
-                expect(netherlandsModel.inGroup.length).toEqual(0);
-
-                netherlandsModel.inGroup.add('Brazil');
-                netherlandsModel.inGroup.add('England');
-                netherlandsModel.inGroup.add('Algeria');
-                expect(netherlandsModel.inGroup.length).toEqual(2);
-                expect(netherlandsModel.inGroup.has('England')).toBeTruthy();
-                expect(netherlandsModel.inGroup.has('France')).toBeFalsy();
-                expect(netherlandsModel.inGroup.has('Algeria')).toBeTruthy();
-
-                netherlandsModel.inGroup.remove('England');
-                expect(netherlandsModel.inGroup.length).toEqual(1);
-
-                netherlandsModel.inGroup = 'England';
-                expect(netherlandsModel.inGroup.length).toEqual(2);
-
-                netherlandsModel.inGroup = 'England';
-                expect(netherlandsModel.inGroup.length).toEqual(2);
-
-                var algeriaModel = catwalk.createModel('team', { name: 'Algeria' });
-                expect(netherlandsModel.inGroup.length).toEqual(3);
-                catwalk.deleteModel('team', algeriaModel);
-                expect(netherlandsModel.inGroup.length).toEqual(2);
-                expect(netherlandsModel.inGroup.has('Algeria')).toBeFalsy();
 
             }));
 
@@ -406,54 +425,58 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the creation of a model;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name:         catwalk.attribute.any(),
-                    colour:       catwalk.attribute.string('none'),
-                    worldCupWins: catwalk.attribute.number()
+                $rootScope.$digest(function() {
+
+                    catwalk.collection('team', {
+                        name:         catwalk.attribute.any(),
+                        colour:       catwalk.attribute.string('none'),
+                        worldCupWins: catwalk.attribute.number()
+                    });
+
+                    spyOn($rootScope, '$broadcast').and.callThrough();
+
+                    $rootScope.$on('catwalk/create/team', function(event, deferred) {
+                        deferred.reject();
+                    });
+
+                    catwalk.createModel('team', {
+                        name:   'Netherlands',
+                        colour: 'Orange'
+                    });
+
+                    expect($rootScope.$broadcast).toHaveBeenCalled();
+                    expect(catwalk.collection('team').length).toEqual(0);
+
                 });
-
-                spyOn($rootScope, '$broadcast').and.callThrough();
-
-                $rootScope.$on('catwalk/create/team', function(event, deferred) {
-                    deferred.reject();
-                });
-
-                catwalk.createModel('team', {
-                    name:   'Netherlands',
-                    colour: 'Orange'
-                });
-
-                $rootScope.$digest();
-
-                expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').length).toEqual(0);
 
             }));
 
             it('Should be able to resolve the creation of a model with additional properties;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name:         catwalk.attribute.any(),
-                    colour:       catwalk.attribute.string('none'),
-                    worldCupWins: catwalk.attribute.number()
+                $rootScope.$digest(function() {
+
+                    catwalk.collection('team', {
+                        name: catwalk.attribute.any(),
+                        colour: catwalk.attribute.string('none'),
+                        worldCupWins: catwalk.attribute.number()
+                    });
+
+                    spyOn($rootScope, '$broadcast').and.callThrough();
+
+                    $rootScope.$on('catwalk/create/team', function (event, deferred) {
+                        deferred.resolve({ colour: 'Blue' });
+                    });
+
+                    var model = catwalk.createModel('team', {
+                        name: 'Netherlands',
+                        colour: 'Orange'
+                    });
+
+                    expect($rootScope.$broadcast).toHaveBeenCalled();
+                    expect(catwalk.collection('team').length).toEqual(1);
+                    expect(model.colour).toEqual('Blue');
+
                 });
-
-                spyOn($rootScope, '$broadcast').and.callThrough();
-
-                $rootScope.$on('catwalk/create/team', function(event, deferred) {
-                    deferred.resolve({ colour: 'Blue' });
-                });
-
-                var model = catwalk.createModel('team', {
-                    name:   'Netherlands',
-                    colour: 'Orange'
-                });
-
-                $rootScope.$digest();
-
-                expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').length).toEqual(1);
-                expect(model.colour).toEqual('Blue');
 
             }));
 
@@ -463,7 +486,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to read a model in a hasOne relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$apply(function() {
+                $rootScope.$digest(function() {
 
                     $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
                         catwalk.createModel('team', { name: 'Brazil' });
@@ -493,7 +516,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to read a model in a hasMany relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$apply(function() {
+                $rootScope.$digest(function() {
 
                     $rootScope.$on('catwalk/read/player', function(event, deferred, property, value) {
                         catwalk.createModel('player', { name: 'Robin van Persie' });
@@ -566,33 +589,35 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the updating of a model;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name:   catwalk.attribute.string(),
-                    colour: catwalk.attribute.string()
+                $rootScope.$digest(function() {
+
+                    catwalk.collection('team', {
+                        name:   catwalk.attribute.string(),
+                        colour: catwalk.attribute.string()
+                    });
+
+                    $rootScope.$on('catwalk/update/team', function(event, deferred) {
+                        deferred.reject();
+                    });
+
+                    var model = catwalk.createModel('team', {
+                        name:   'Iceland',
+                        colour: 'Blue'
+                    });
+
+                    spyOn($rootScope, '$broadcast').and.callThrough();
+
+                    catwalk.updateModel('team', model, {
+                        name:   'Argentina',
+                        colour: 'Sky Blue'
+                    });
+
+                    expect($rootScope.$broadcast).toHaveBeenCalled();
+                    expect(catwalk.collection('team').length).toEqual(1);
+                    expect(catwalk.collection('team')[0].name).toEqual('Iceland');
+                    expect(catwalk.collection('team')[0].colour).toEqual('Blue');
+
                 });
-
-                $rootScope.$on('catwalk/update/team', function(event, deferred) {
-                    deferred.reject();
-                });
-
-                var model = catwalk.createModel('team', {
-                    name:   'Iceland',
-                    colour: 'Blue'
-                });
-
-                spyOn($rootScope, '$broadcast').and.callThrough();
-
-                catwalk.updateModel('team', model, {
-                    name:   'Argentina',
-                    colour: 'Sky Blue'
-                });
-
-                $rootScope.$digest();
-
-                expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').length).toEqual(1);
-                expect(catwalk.collection('team')[0].name).toEqual('Iceland');
-                expect(catwalk.collection('team')[0].colour).toEqual('Blue');
 
             }));
 
@@ -621,29 +646,31 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the deletion of a model;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name:         catwalk.attribute.any(),
-                    colour:       catwalk.attribute.string(),
-                    worldCupWins: catwalk.attribute.number()
+                $rootScope.$digest(function() {
+
+                    catwalk.collection('team', {
+                        name: catwalk.attribute.any(),
+                        colour: catwalk.attribute.string(),
+                        worldCupWins: catwalk.attribute.number()
+                    });
+
+                    spyOn($rootScope, '$broadcast').and.callThrough();
+
+                    $rootScope.$on('catwalk/delete/team', function (event, deferred) {
+                        deferred.reject();
+                    });
+
+                    var model = catwalk.createModel('team', {
+                        name: 'Iceland',
+                        colour: 'Blue'
+                    });
+
+                    catwalk.deleteModel('team', model);
+
+                    expect($rootScope.$broadcast).toHaveBeenCalled();
+                    expect(catwalk.collection('team').length).toEqual(1);
+
                 });
-
-                spyOn($rootScope, '$broadcast').and.callThrough();
-
-                $rootScope.$on('catwalk/delete/team', function(event, deferred) {
-                    deferred.reject();
-                });
-
-                var model = catwalk.createModel('team', {
-                    name:   'Iceland',
-                    colour: 'Blue'
-                });
-
-                catwalk.deleteModel('team', model);
-
-                $rootScope.$digest();
-
-                expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').length).toEqual(1);
 
             }));
 

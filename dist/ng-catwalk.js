@@ -1,4 +1,4 @@
-( function ngCatwalk( $angular, $object ) {
+( function ngCatwalk( $angular, _, $object ) {
     "use strict";
     var app = $angular.module( 'ngCatwalk', [ 'ngCrossfilter' ] );
     var throwException = function throwException( message ) {
@@ -164,9 +164,14 @@
                 deleteModel: function deleteModel( collectionName, model ) {
                     this.collection( collectionName ).deleteModel( model );
                     var promise = this.createPromise( collectionName, 'delete', [ model ] );
+                    promise.then( this.resolveDeleteModel( collectionName, model ).bind( this ) );
                     promise.catch( this.rejectDeleteModel( collectionName, model ).bind( this ) );
-                    this.pruneRelationships( collectionName, model );
                     return model;
+                },
+                resolveDeleteModel: function resolveDeleteModel( collectionName, model ) {
+                    return function resolvePromise() {
+                        this.pruneRelationships( collectionName, model );
+                    };
                 },
                 rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
                     return function rejectPromise() {
@@ -177,7 +182,7 @@
                 },
                 createPromise: function createPromise( collectionName, type, args ) {
                     var deferred = $q.defer();
-                    if ( !Array.isArray( args ) ) {
+                    if ( !_.isArray( args ) ) {
                         args = args ? [ args ] : [];
                     }
                     args.unshift( deferred );
@@ -258,7 +263,7 @@
                             var entry = store[ collectionName ][ internalId ][ property ];
                             foreignCollection.filterBy( foreignKey, entry );
                             var foreignModel = foreignCollection[ 0 ];
-                            if ( foreignCollection.length === 0 ) {
+                            if ( entry.length && foreignCollection.length === 0 ) {
                                 createPromise( foreignCollection.name, 'read', [ foreignKey, entry ] );
                             }
                             foreignCollection.unfilterAll();
@@ -372,4 +377,4 @@
             return new Catwalk();
         }
     ] );
-} )( window.angular, window.Object );
+} )( window.angular, window._, window.Object );

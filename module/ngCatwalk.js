@@ -1,4 +1,4 @@
-(function ngCatwalk($angular, $object) {
+(function ngCatwalk($angular, _, $object) {
 
     "use strict";
 
@@ -497,27 +497,29 @@
                     var promise = this.createPromise(collectionName, 'delete', [model]);
 
                     // Promise resolution.
-//                    promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
+                    promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
                     promise.catch(this.rejectDeleteModel(collectionName, model).bind(this));
-
-                    // Update relationships to remove any ghost references.
-                    this.pruneRelationships(collectionName, model);
 
                     return model;
 
                 },
 
-//                /**
-//                 * @method resolveDeleteModel
-//                 * @param collectionName {String}
-//                 * @param model {Object}
-//                 * @return {Object}
-//                 */
-//                resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
-//
-//                    return function resolvePromise() {};
-//
-//                },
+                /**
+                 * @method resolveDeleteModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Function}
+                 */
+                resolveDeleteModel: function resolveDeleteModel(collectionName, model) {
+
+                    return function resolvePromise() {
+
+                        // Update relationships to remove any ghost references.
+                        this.pruneRelationships(collectionName, model);
+
+                    };
+
+                },
 
                 /**
                  * @method rejectDeleteModel
@@ -548,7 +550,7 @@
 
                     var deferred = $q.defer();
 
-                    if (!Array.isArray(args)) {
+                    if (!_.isArray(args)) {
 
                         // Ensure the `args` variable is an array.
                         args = args ? [args] : [];
@@ -714,16 +716,22 @@
                          */
                         get: function get() {
 
-                            // Filter the foreign collection by the value we've defined on the local model.
                             var entry = store[collectionName][internalId][property];
+
+                            // Filter the foreign collection by the value we've defined on the local model.
                             foreignCollection.filterBy(foreignKey, entry);
                             var foreignModel = foreignCollection[0];
 
-                            if (foreignCollection.length === 0) {
+                            if (entry.length && foreignCollection.length === 0) {
+
+                                // Relationship exists, but we don't have the corresponding model yet, and
+                                // therefore we'll need to request it.
                                 createPromise(foreignCollection.name, 'read', [foreignKey, entry]);
+
                             }
 
                             foreignCollection.unfilterAll();
+
                             return foreignModel;
 
                         },
@@ -996,4 +1004,4 @@
 
         }]);
 
-})(window.angular, window.Object);
+})(window.angular, window._, window.Object);
