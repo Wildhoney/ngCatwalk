@@ -236,6 +236,12 @@
                 _relationshipStore: {},
 
                 /**
+                 * @property _readPromises
+                 * @type {Object}
+                 */
+                _readPromises: {},
+
+                /**
                  * @property _relationships
                  * @type {Object}
                  */
@@ -252,6 +258,12 @@
                  * @type {String}
                  */
                 _eventName: 'catwalk/{{type}}/{{collection}}',
+
+                /**
+                 * @property _promiseName
+                 * @type {String}
+                 */
+                _promiseName: 'catwalk/promise/{{collection}}/{{key}}/{{value}}',
 
                 /**
                  * @property _relationshipName
@@ -678,22 +690,53 @@
 
                 /**
                  * @method loadModel
-                 * @param foreignCollectionName {String}
+                 * @param localCollectionName {String}
                  * @param localKey {String}
+                 * @param foreignCollectionName {String}
                  * @param foreignKey {String}
                  * @param internalId {String}
                  * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
                  * @param defaultValue {Object|Array|Number|Boolean|Date|String|RegExp}
                  * @return {void}
                  */
-                loadModel: function loadModel(foreignCollectionName, localKey, foreignKey, internalId, value, defaultValue) {
+                loadModel: function loadModel(localCollectionName, localKey, foreignCollectionName, foreignKey, internalId, value, defaultValue) {
 
                     var createPromise = this.createPromise.bind(this),
                         createModel   = this.createModel.bind(this),
                         store         = this._relationshipStore;
 
+                    /**
+                     * @method rejectPromise
+                     * @return {void}
+                     */
+                    var rejectPromise = function rejectPromise() {
+
+                        // Destroy the relationship because the model was rejected.
+                        store[localCollectionName][internalId][localKey] = defaultValue;
+
+                    };
+
                     // Create the promise to retrieve the missing model.
-                    var promise = createPromise(foreignCollectionName, 'read', [foreignKey, value]);
+                    var promise     = createPromise(foreignCollectionName, 'read', [foreignKey, value]),
+                        promiseName = $interpolate(this._promiseName)({
+                            collection: foreignCollectionName,
+                            key:        foreignKey,
+                            value:      value
+                        });
+
+                    if (value) {
+
+                        if (this._readPromises[promiseName]) {
+
+                            // Promise has already been loaded, so we'll immediately reject the promise.
+                            return rejectPromise();
+
+                        }
+
+                        // Store so we never attempt to load the model again.
+                        this._readPromises[promiseName] = true;
+
+                    }
 
                     promise.then(function andThen(model) {
 
@@ -703,7 +746,7 @@
                     });
 
                     // Otherwise we'll wait for the rejection.
-                    promise.catch(function andCatch() {
+                    promise.catch(function() {
 
                         // Destroy the relationship because the model was rejected.
                         store[foreignCollectionName][internalId][localKey] = defaultValue;
@@ -739,14 +782,14 @@
                         get: function get() {
 
                             // Filter the foreign collection by the value we've defined on the local model.
-                            var value = store[collectionName][internalId][property];
-                            foreignCollection.filterBy(foreignKey, value);
+                            var entry = store[collectionName][internalId][property];
+                            foreignCollection.filterBy(foreignKey, entry);
                             var foreignModel = foreignCollection[0];
 
                             if (foreignCollection.length === 0) {
 
                                 // Lazy-load the model because now we have it!
-                                loadModel(foreignCollection.name, property, foreignKey, internalId, value, '');
+                                loadModel(collectionName, property, foreignCollection.name, foreignKey, internalId, entry, '');
 
                             }
 
@@ -779,8 +822,9 @@
                  */
                 createHasManyRelationship: function createHasManyRelationship(collectionName, model, property, foreignCollection, foreignKey) {
 
-                    var internalId = model[this._primaryName],
-                        store      = this._relationshipStore;
+                    var internalId    = model[this._primaryName],
+                        store         = this._relationshipStore,
+                        loadModel     = this.loadModel.bind(this);
 
                     // Attach the property to the model relationship store.
                     store[collectionName][internalId][property] = model[property] || [];
@@ -807,6 +851,13 @@
                             // Fetch all of the models that pertain to our relationship array.
                             foreignCollection.filterBy(foreignKey, entry, inArray);
                             var foreignModels = foreignCollection.collection(Infinity);
+
+                            if (foreignModels.length < entry.length) {
+
+                                loadModel(collectionName, property, foreignCollection.name, foreignKey, internalId, 'Robin van Persie', []);
+
+                            }
+
                             foreignCollection.unfilterAll();
 
                             /**

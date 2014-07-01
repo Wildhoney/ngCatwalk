@@ -461,7 +461,7 @@ describe('ngCatwalk', function() {
 
         describe('Read', function() {
 
-            it('Should be able to read a model;', inject(function ($rootScope, catwalk) {
+            it('Should be able to read a model in a hasOne relationship;', inject(function ($rootScope, catwalk) {
 
                 $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
 
@@ -493,6 +493,46 @@ describe('ngCatwalk', function() {
                 $rootScope.$digest();
                 expect(netherlandsModel.versus.name).toEqual('Brazil');
                 expect(catwalk.collection('team').length).toEqual(2);
+
+            }));
+
+            it('Should be able to read a model in a hasMany relationship;', inject(function ($rootScope, catwalk) {
+
+                $rootScope.$on('catwalk/read/player', function(event, deferred, property, value) {
+
+                    expect(property).toEqual('name');
+                    expect(value).toEqual('Robin van Persie');
+
+                    deferred.resolve({
+                        name: 'Robin van Persie'
+                    });
+
+                });
+
+                catwalk.collection('team', {
+                    name:    catwalk.attribute.string(),
+                    players: catwalk.relationship.hasMany({
+                        collection: 'player',
+                        foreignKey: 'name'
+                    })
+                });
+
+                catwalk.collection('player', {
+                    name: catwalk.attribute.string()
+                });
+
+                var netherlandsModel = catwalk.createModel('team', {
+                    name: 'Netherlands',
+                    players: ['Dirk Kuyt', 'Robin van Persie']
+                });
+
+                catwalk.createModel('player', { name: 'Dirk Kuyt' });
+
+                expect(netherlandsModel.players.length).toEqual(1);
+                $rootScope.$digest();
+                expect(netherlandsModel.players[0].name).toEqual('Dirk Kuyt');
+                expect(netherlandsModel.players[1].name).toEqual('Robin van Persie');
+                expect(catwalk.collection('player').length).toEqual(2);
 
             }));
 
