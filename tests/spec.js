@@ -799,7 +799,7 @@ describe('ngCatwalk', function() {
 
         });
 
-        it('Should be able to lazy-load a hasMany relationship model;', function(done) {
+        it('Should be able to lazy-load a single hasMany relationship model;', function(done) {
 
             var ferrariModel;
 
@@ -851,6 +851,68 @@ describe('ngCatwalk', function() {
                     catwalk.createModel('colour', { name: 'Yellow' });
 
                     expect(catwalk.collection('colour').length).toEqual(4);
+                    expect(ferrariModel.colours.length).toEqual(1);
+
+                });
+
+            });
+
+        });
+
+        it('Should be able to lazy-load multiple hasMany relationship model;', function(done) {
+
+            var ferrariModel;
+
+            inject(function($rootScope, $timeout, catwalk) {
+
+                var index = 2;
+
+                $rootScope.$apply(function() {
+
+                    $rootScope.$on('catwalk/read/colour', function(deferred, model, property, value) {
+
+                        setTimeout(function timeout() {
+
+                            catwalk.createModel('colour', { name: value });
+                            expect(ferrariModel.colours[index - 1].name).toEqual(value);
+                            expect(catwalk.collection('colour').length).toEqual(++index);
+
+                        }, 50);
+
+                    });
+
+                    setTimeout(function timeout() {
+
+                        expect(catwalk.collection('colour').length).toEqual(5);
+                        expect(ferrariModel.colours[0].name).toEqual('Green');
+                        expect(ferrariModel.colours[1].name).toEqual('Red');
+                        expect(ferrariModel.colours[2].name).toEqual('Black');
+                        done();
+
+                    }, 400);
+
+                    catwalk.collection('car', {
+                        name: catwalk.attribute.string(),
+                        colours: catwalk.relationship.hasMany({
+                            collection: 'colour',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('colour', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    ferrariModel = catwalk.createModel('car', {
+                        name: 'Ferrari',
+                        colours: ['Red', 'Black', 'Green']
+                    });
+
+                    expect(catwalk.collection('car').length).toEqual(1);
+                    catwalk.createModel('colour', { name: 'Green' });
+                    catwalk.createModel('colour', { name: 'Yellow' });
+                    expect(catwalk.collection('colour').length).toEqual(2);
+
                     expect(ferrariModel.colours.length).toEqual(1);
 
                 });
