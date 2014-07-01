@@ -677,6 +677,42 @@
                 },
 
                 /**
+                 * @method loadModel
+                 * @param foreignCollectionName {String}
+                 * @param localKey {String}
+                 * @param foreignKey {String}
+                 * @param internalId {String}
+                 * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
+                 * @param defaultValue {Object|Array|Number|Boolean|Date|String|RegExp}
+                 * @return {void}
+                 */
+                loadModel: function loadModel(foreignCollectionName, localKey, foreignKey, internalId, value, defaultValue) {
+
+                    var createPromise = this.createPromise.bind(this),
+                        createModel   = this.createModel.bind(this),
+                        store         = this._relationshipStore;
+
+                    // Create the promise to retrieve the missing model.
+                    var promise = createPromise(foreignCollectionName, 'read', [foreignKey, value]);
+
+                    promise.then(function andThen(model) {
+
+                        // Create the model which will invoke the Angular run-loop.
+                        createModel(foreignCollectionName, model);
+
+                    });
+
+                    // Otherwise we'll wait for the rejection.
+                    promise.catch(function andCatch() {
+
+                        // Destroy the relationship because the model was rejected.
+                        store[foreignCollectionName][internalId][localKey] = defaultValue;
+
+                    });
+
+                },
+
+                /**
                  * @method createHasOneRelationship
                  * @param collectionName {String}
                  * @param model {Object}
@@ -689,8 +725,7 @@
 
                     var internalId    = model[this._primaryName],
                         store         = this._relationshipStore,
-                        createPromise = this.createPromise.bind(this),
-                        createModel   = this.createModel.bind(this);
+                        loadModel     = this.loadModel.bind(this);
 
                     // Attach the property to the model relationship store.
                     store[collectionName][internalId][property] = model[property] || '';
@@ -710,23 +745,8 @@
 
                             if (foreignCollection.length === 0) {
 
-                                // Create the promise to retrieve the missing model.
-                                var promise = createPromise(collectionName, 'read', [foreignKey, value]);
-
-                                promise.then(function andThen(model) {
-
-                                    // Create the model which will invoke the Angular run-loop.
-                                    createModel(foreignCollection.name, model);
-
-                                });
-
-                                // Otherwise we'll wait for the rejection.
-                                promise.catch(function andCatch() {
-
-                                    // Destroy the relationship because the model was rejected.
-                                    store[collectionName][internalId][property] = '';
-                                    
-                                });
+                                // Lazy-load the model because now we have it!
+                                loadModel(foreignCollection.name, property, foreignKey, internalId, value, '');
 
                             }
 
