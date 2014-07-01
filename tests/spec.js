@@ -131,7 +131,9 @@ describe('ngCatwalk', function() {
 
             it('Should be able to define a hasOne relationship to another collection;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                var englandModel, royHodgsonModel;
+
+                $rootScope.$apply(function() {
 
                     $rootScope.$on('catwalk/update/manager', function(event, deferred) {
                         deferred.resolve();
@@ -153,8 +155,12 @@ describe('ngCatwalk', function() {
                         name: catwalk.attribute.string()
                     });
 
-                    var englandModel    = catwalk.createModel('team', { name: 'England', manager: 'Roy Hodgson' }),
-                        royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+                    englandModel    = catwalk.createModel('team', { name: 'England', manager: 'Roy Hodgson' });
+                    royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
+
+                });
+
+                $rootScope.$apply(function() {
 
                     expect(catwalk.collection('team').length).toEqual(1);
                     expect(catwalk.collection('manager').length).toEqual(1);
@@ -162,6 +168,11 @@ describe('ngCatwalk', function() {
                     expect(englandModel.manager.name).toEqual('Roy Hodgson');
 
                     catwalk.deleteModel('manager', royHodgsonModel);
+
+                });
+
+                $rootScope.$apply(function() {
+
                     expect(englandModel.manager.name).toEqual();
 
                     royHodgsonModel = catwalk.createModel('manager', { name: 'Roy Hodgson' });
@@ -174,6 +185,10 @@ describe('ngCatwalk', function() {
                         name: 'Gary Linekar'
                     });
 
+                });
+
+                $rootScope.$apply(function() {
+
                     expect(englandModel.manager.name).toEqual();
 
                     catwalk.updateModel('manager', royHodgsonModel, {
@@ -184,16 +199,18 @@ describe('ngCatwalk', function() {
 
                     englandModel.manager = 'Roy Hodgson';
                     expect(englandModel.manager.name).toEqual('Roy Hodgson');
-
+                    
                 });
 
             }));
 
             it('Should be able to update a hasOne relationship;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                var netherlandsModel, brazilModel, englandModel;
 
-                    $rootScope.$on('catwalk/update/team', function(event, deferred) {
+                $rootScope.$apply(function() {
+
+                    $rootScope.$on('catwalk/update/team', function (event, deferred) {
                         deferred.resolve();
                     });
 
@@ -205,9 +222,9 @@ describe('ngCatwalk', function() {
                         })
                     });
 
-                    var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' }),
-                        brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                        englandModel     = catwalk.createModel('team', { name: 'England' });
+                    netherlandsModel = catwalk.createModel('team', { name: 'Netherlands', playing: 'Brazil' });
+                    brazilModel = catwalk.createModel('team', { name: 'Brazil' });
+                    englandModel = catwalk.createModel('team', { name: 'England' });
 
                     expect(typeof netherlandsModel.playing).toBe('object');
                     expect(typeof brazilModel.playing).toBe('object');
@@ -218,6 +235,11 @@ describe('ngCatwalk', function() {
                     expect(netherlandsModel.playing.name).toEqual('England');
 
                     catwalk.deleteModel('team', englandModel);
+
+                });
+
+                $rootScope.$apply(function() {
+
                     expect(netherlandsModel.playing.name).toBeUndefined();
 
                     netherlandsModel.playing = 'Non-existent';
@@ -231,14 +253,24 @@ describe('ngCatwalk', function() {
 
                     netherlandsModel.playing = 'Brazil';
                     expect(netherlandsModel.playing.name).toEqual('Brazil');
+
                     catwalk.updateModel('team', brazilModel, {
                         name: 'Costa Rica'
                     });
+
+                });
+
+                $rootScope.$apply(function() {
+
                     expect(netherlandsModel.playing.name).toEqual();
 
                     catwalk.updateModel('team', brazilModel, {
                         name: 'Brazil'
                     });
+
+                });
+
+                $rootScope.$apply(function() {
 
                     expect(netherlandsModel.playing.name).toEqual();
                     netherlandsModel.playing = 'Brazil';
@@ -319,7 +351,9 @@ describe('ngCatwalk', function() {
 
             it('Should be able to update a hasMany relationship;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                var netherlandsModel, brazilModel, englandModel;
+
+                $rootScope.$apply(function() {
 
                     catwalk.collection('team', {
                         name: catwalk.attribute.string(),
@@ -333,9 +367,9 @@ describe('ngCatwalk', function() {
                         deferred.resolve();
                     });
 
-                    var netherlandsModel = catwalk.createModel('team', { name: 'Netherlands' }),
-                        brazilModel      = catwalk.createModel('team', { name: 'Brazil' }),
-                        englandModel     = catwalk.createModel('team', { name: 'England' });
+                    netherlandsModel = catwalk.createModel('team', { name: 'Netherlands' });
+                    brazilModel      = catwalk.createModel('team', { name: 'Brazil' });
+                    englandModel     = catwalk.createModel('team', { name: 'England' });
 
                     expect(Array.isArray(netherlandsModel.inGroup)).toBeTruthy();
                     expect(Array.isArray(brazilModel.inGroup)).toBeTruthy();
@@ -369,6 +403,11 @@ describe('ngCatwalk', function() {
                     var algeriaModel = catwalk.createModel('team', { name: 'Algeria' });
                     expect(netherlandsModel.inGroup.length).toEqual(3);
                     catwalk.deleteModel('team', algeriaModel);
+
+                });
+
+                $rootScope.$apply(function() {
+
                     expect(netherlandsModel.inGroup.length).toEqual(2);
                     expect(netherlandsModel.inGroup.has('Algeria')).toBeFalsy();
 
@@ -425,7 +464,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the creation of a model;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                $rootScope.$apply(function() {
 
                     catwalk.collection('team', {
                         name:         catwalk.attribute.any(),
@@ -444,6 +483,10 @@ describe('ngCatwalk', function() {
                         colour: 'Orange'
                     });
 
+                });
+
+                $rootScope.$apply(function() {
+
                     expect($rootScope.$broadcast).toHaveBeenCalled();
                     expect(catwalk.collection('team').length).toEqual(0);
 
@@ -453,7 +496,9 @@ describe('ngCatwalk', function() {
 
             it('Should be able to resolve the creation of a model with additional properties;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                var model;
+
+                $rootScope.$apply(function() {
 
                     catwalk.collection('team', {
                         name: catwalk.attribute.any(),
@@ -467,10 +512,14 @@ describe('ngCatwalk', function() {
                         deferred.resolve({ colour: 'Blue' });
                     });
 
-                    var model = catwalk.createModel('team', {
+                    model = catwalk.createModel('team', {
                         name: 'Netherlands',
                         colour: 'Orange'
                     });
+
+                });
+
+                $rootScope.$apply(function() {
 
                     expect($rootScope.$broadcast).toHaveBeenCalled();
                     expect(catwalk.collection('team').length).toEqual(1);
@@ -486,7 +535,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to read a model in a hasOne relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                $rootScope.$apply(function() {
 
                     $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
                         catwalk.createModel('team', { name: 'Brazil' });
@@ -516,7 +565,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to read a model in a hasMany relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                $rootScope.$apply(function() {
 
                     $rootScope.$on('catwalk/read/player', function(event, deferred, property, value) {
                         catwalk.createModel('player', { name: 'Robin van Persie' });
@@ -589,7 +638,7 @@ describe('ngCatwalk', function() {
 
             it('Should be able to reject the updating of a model;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                $rootScope.$apply(function() {
 
                     catwalk.collection('team', {
                         name:   catwalk.attribute.string(),
@@ -612,6 +661,10 @@ describe('ngCatwalk', function() {
                         colour: 'Sky Blue'
                     });
 
+                });
+
+                $rootScope.$apply(function() {
+
                     expect($rootScope.$broadcast).toHaveBeenCalled();
                     expect(catwalk.collection('team').length).toEqual(1);
                     expect(catwalk.collection('team')[0].name).toEqual('Iceland');
@@ -625,28 +678,37 @@ describe('ngCatwalk', function() {
 
         describe('Delete', function() {
 
-            it('Should be able to delete a model;', inject(function(catwalk) {
+            it('Should be able to delete a model;', inject(function($rootScope, catwalk) {
 
-                catwalk.collection('team', {
-                    name:         catwalk.attribute.any(),
-                    colour:       catwalk.attribute.string(),
-                    worldCupWins: catwalk.attribute.number()
+                $rootScope.$apply(function() {
+
+                    catwalk.collection('team', {
+                        name:         catwalk.attribute.any(),
+                        colour:       catwalk.attribute.string(),
+                        worldCupWins: catwalk.attribute.number()
+                    });
+
+                    var model = catwalk.createModel('team', {
+                        name:   'Iceland',
+                        colour: 'Blue'
+                    });
+
+                    expect(catwalk.collection('team').length).toEqual(1);
+                    catwalk.deleteModel('team', model);
+
                 });
 
-                var model = catwalk.createModel('team', {
-                    name:   'Iceland',
-                    colour: 'Blue'
-                });
+                $rootScope.$apply(function() {
 
-                expect(catwalk.collection('team').length).toEqual(1);
-                catwalk.deleteModel('team', model);
-                expect(catwalk.collection('team').length).toEqual(0);
+                    expect(catwalk.collection('team').length).toEqual(0);
+
+                });
 
             }));
 
             it('Should be able to reject the deletion of a model;', inject(function($rootScope, catwalk) {
 
-                $rootScope.$digest(function() {
+                $rootScope.$apply(function() {
 
                     catwalk.collection('team', {
                         name: catwalk.attribute.any(),
@@ -666,6 +728,10 @@ describe('ngCatwalk', function() {
                     });
 
                     catwalk.deleteModel('team', model);
+
+                });
+
+                $rootScope.$apply(function() {
 
                     expect($rootScope.$broadcast).toHaveBeenCalled();
                     expect(catwalk.collection('team').length).toEqual(1);
