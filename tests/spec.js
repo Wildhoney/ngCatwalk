@@ -400,7 +400,9 @@ describe('ngCatwalk', function() {
                     worldCupWins: catwalk.attribute.number()
                 });
 
-                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred) {
+                spyOn($rootScope, '$broadcast').and.callThrough();
+
+                $rootScope.$on('catwalk/create/team', function(event, deferred) {
                     deferred.reject();
                 });
 
@@ -424,14 +426,10 @@ describe('ngCatwalk', function() {
                     worldCupWins: catwalk.attribute.number()
                 });
 
-                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
+                spyOn($rootScope, '$broadcast').and.callThrough();
 
-                    expect(typeof model).toEqual('object');
-
-                    deferred.resolve({
-                        colour: 'Blue'
-                    });
-
+                $rootScope.$on('catwalk/create/team', function(event, deferred) {
+                    deferred.resolve({ colour: 'Blue' });
                 });
 
                 var model = catwalk.createModel('team', {
@@ -489,14 +487,16 @@ describe('ngCatwalk', function() {
                     colour: catwalk.attribute.string()
                 });
 
+                $rootScope.$on('catwalk/update/team', function(event, deferred) {
+                    deferred.reject();
+                });
+
                 var model = catwalk.createModel('team', {
                     name:   'Iceland',
                     colour: 'Blue'
                 });
 
-                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
-                    deferred.reject();
-                });
+                spyOn($rootScope, '$broadcast').and.callThrough();
 
                 catwalk.updateModel('team', model, {
                     name:   'Argentina',
@@ -543,16 +543,10 @@ describe('ngCatwalk', function() {
                     worldCupWins: catwalk.attribute.number()
                 });
 
-                spyOn($rootScope, '$broadcast').and.callFake(function fake(name, deferred, model) {
+                spyOn($rootScope, '$broadcast').and.callThrough();
 
-                    expect(typeof model).toEqual('object');
-
+                $rootScope.$on('catwalk/delete/team', function(event, deferred) {
                     deferred.reject();
-
-                });
-
-                catwalk.createModel('team', {
-                    name: 'Iceland'
                 });
 
                 var model = catwalk.createModel('team', {
@@ -565,7 +559,7 @@ describe('ngCatwalk', function() {
                 $rootScope.$digest();
 
                 expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').length).toEqual(0);
+                expect(catwalk.collection('team').length).toEqual(1);
 
             }));
 
