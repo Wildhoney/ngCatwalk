@@ -1,6 +1,6 @@
 {
   "name": "ng-catwalk",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "homepage": "https://github.com/Wildhoney/ngCatwalk",
   "authors": [
     "Adam Timberlake <adam.timberlake@gmail.com>"
@@ -29,6 +29,7 @@
   ],
   "dependencies": {
     "bootstrap": "~3.1.1",
-    "ng-crossfilter": "~2.2.11"
+    "ng-crossfilter": "~2.2.11",
+    "underscore": "~1.6.0"
   }
 }

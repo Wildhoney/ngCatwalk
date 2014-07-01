@@ -76,9 +76,11 @@
                 },
                 _primaryName: '_catwalkId',
                 _relationshipStore: {},
+                _readPromises: {},
                 _relationships: {},
                 _silent: false,
                 _eventName: 'catwalk/{{type}}/{{collection}}',
+                _promiseName: 'catwalk/promise/{{collection}}/{{key}}/{{value}}',
                 _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
                 _collections: {},
                 collection: function collection( name, properties ) {
@@ -90,6 +92,7 @@
                         this._collections[ name ].primaryKey( this._primaryName );
                         this._collections[ name ].blueprint = properties;
                         this._collections[ name ].index = 0;
+                        this._collections[ name ].name = name;
                         this._propertyIterator( properties, function iterator( property ) {
                             this._collections[ name ].addDimension( property );
                         } );
@@ -247,12 +250,17 @@
                 },
                 createHasOneRelationship: function createHasOneRelationship( collectionName, model, property, foreignCollection, foreignKey ) {
                     var internalId = model[ this._primaryName ],
-                        store = this._relationshipStore;
+                        store = this._relationshipStore,
+                        createPromise = this.createPromise.bind( this );
                     store[ collectionName ][ internalId ][ property ] = model[ property ] || '';
                     $object.defineProperty( model, property, {
                         get: function get() {
-                            foreignCollection.filterBy( foreignKey, store[ collectionName ][ internalId ][ property ] );
+                            var entry = store[ collectionName ][ internalId ][ property ];
+                            foreignCollection.filterBy( foreignKey, entry );
                             var foreignModel = foreignCollection[ 0 ];
+                            if ( foreignCollection.length === 0 ) {
+                                createPromise( foreignCollection.name, 'read', [ foreignKey, entry ] );
+                            }
                             foreignCollection.unfilterAll();
                             return foreignModel;
                         },
@@ -263,7 +271,8 @@
                 },
                 createHasManyRelationship: function createHasManyRelationship( collectionName, model, property, foreignCollection, foreignKey ) {
                     var internalId = model[ this._primaryName ],
-                        store = this._relationshipStore;
+                        store = this._relationshipStore,
+                        createPromise = this.createPromise.bind( this );
                     store[ collectionName ][ internalId ][ property ] = model[ property ] || [];
                     var entry = store[ collectionName ][ internalId ][ property ];
                     var inArray = function inArray( expected, actual ) {
@@ -273,6 +282,15 @@
                         get: function get() {
                             foreignCollection.filterBy( foreignKey, entry, inArray );
                             var foreignModels = foreignCollection.collection( Infinity );
+                            if ( entry.length && foreignModels.length !== entry.length ) {
+                                var values = _.pluck( foreignModels, foreignKey ),
+                                    difference = _.difference( entry, values );
+                                if ( values.length !== 0 ) {
+                                    for ( var index = 0; index < difference.length; index++ ) {
+                                        createPromise( foreignCollection.name, 'read', [ foreignKey, difference[ index ] ] );
+                                    }
+                                }
+                            }
                             foreignCollection.unfilterAll();
                             foreignModels.add = function add( value ) {
                                 if ( !foreignModels.has( value ) ) {

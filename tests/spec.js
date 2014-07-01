@@ -463,76 +463,69 @@ describe('ngCatwalk', function() {
 
             it('Should be able to read a model in a hasOne relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
+                $rootScope.$apply(function() {
 
-                    expect(property).toEqual('name');
-                    expect(value).toEqual('Brazil');
-
-                    deferred.resolve({
-                        name: 'Brazil'
+                    $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
+                        catwalk.createModel('team', { name: 'Brazil' });
                     });
 
-                });
+                    catwalk.collection('team', {
+                        name:   catwalk.attribute.string(),
+                        versus: catwalk.relationship.hasOne({
+                            collection: 'team',
+                            foreignKey: 'name'
+                        })
+                    });
 
-                catwalk.collection('team', {
-                    name:   catwalk.attribute.string(),
-                    versus: catwalk.relationship.hasOne({
-                        collection: 'team',
-                        foreignKey: 'name'
-                    })
-                });
+                    var netherlandsModel = catwalk.createModel('team', {
+                        name: 'Netherlands',
+                        versus: 'Brazil'
+                    });
 
-                var netherlandsModel = catwalk.createModel('team', {
-                    name: 'Netherlands',
-                    versus: 'Brazil'
-                });
+                    expect(catwalk.collection('team').length).toEqual(1);
+                    expect(typeof netherlandsModel.versus.add).toEqual('function');
+                    expect(netherlandsModel.versus.name).toEqual('Brazil');
+                    expect(catwalk.collection('team').length).toEqual(2);
 
-                $rootScope.$digest();
-                expect(catwalk.collection('team').length).toEqual(1);
-                expect(typeof netherlandsModel.versus.add).toEqual('function');
-                $rootScope.$digest();
-                expect(netherlandsModel.versus.name).toEqual('Brazil');
-                expect(catwalk.collection('team').length).toEqual(2);
+                });
 
             }));
 
             it('Should be able to read a model in a hasMany relationship;', inject(function ($rootScope, catwalk) {
 
-                $rootScope.$on('catwalk/read/player', function(event, deferred, property, value) {
+                $rootScope.$apply(function() {
 
-                    expect(property).toEqual('name');
-                    expect(value).toEqual('Robin van Persie');
-
-                    deferred.resolve({
-                        name: 'Robin van Persie'
+                    $rootScope.$on('catwalk/read/player', function(event, deferred, property, value) {
+                        catwalk.createModel('player', { name: 'Robin van Persie' });
                     });
 
+                    catwalk.collection('team', {
+                        name:    catwalk.attribute.string(),
+                        players: catwalk.relationship.hasMany({
+                            collection: 'player',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('player', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    var netherlandsModel = catwalk.createModel('team', {
+                        name: 'Netherlands',
+                        players: ['Dirk Kuyt', 'Robin van Persie']
+                    });
+
+                    expect(catwalk.collection('player').length).toEqual(0);
+                    catwalk.createModel('player', { name: 'Dirk Kuyt' });
+                    expect(catwalk.collection('player').length).toEqual(1);
+
+                    expect(netherlandsModel.players.length).toEqual(1);
+                    expect(catwalk.collection('player').length).toEqual(2);
+                    expect(catwalk.collection('player')[0].name).toEqual('Dirk Kuyt');
+                    expect(catwalk.collection('player')[1].name).toEqual('Robin van Persie');
+
                 });
-
-                catwalk.collection('team', {
-                    name:    catwalk.attribute.string(),
-                    players: catwalk.relationship.hasMany({
-                        collection: 'player',
-                        foreignKey: 'name'
-                    })
-                });
-
-                catwalk.collection('player', {
-                    name: catwalk.attribute.string()
-                });
-
-                var netherlandsModel = catwalk.createModel('team', {
-                    name: 'Netherlands',
-                    players: ['Dirk Kuyt', 'Robin van Persie']
-                });
-
-                catwalk.createModel('player', { name: 'Dirk Kuyt' });
-
-                expect(netherlandsModel.players.length).toEqual(1);
-                $rootScope.$digest();
-                expect(netherlandsModel.players[0].name).toEqual('Dirk Kuyt');
-                expect(netherlandsModel.players[1].name).toEqual('Robin van Persie');
-                expect(catwalk.collection('player').length).toEqual(2);
 
             }));
 

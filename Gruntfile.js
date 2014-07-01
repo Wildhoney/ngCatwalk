@@ -82,6 +82,7 @@ module.exports = function(grunt) {
                         'example/js/vendor/angular/angular.js',
                         'example/js/vendor/angular-mocks/angular-mocks.js',
                         'example/js/vendor/crossfilter/crossfilter.js',
+                        'example/js/vendor/underscore/underscore.js',
                         'example/js/vendor/ng-crossfilter/dist/ng-crossfilter.js'
                     ]
                 }
@@ -131,8 +132,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-jsbeautifier');
 
     grunt.registerTask('build', ['copy', 'uglify', 'compress', 'comments', 'jsbeautifier']);
-//    grunt.registerTask('test', ['jshint', 'jasmine']);
-    grunt.registerTask('test', ['jasmine']);
+    grunt.registerTask('test', ['jshint', 'jasmine']);
     grunt.registerTask('default', ['jasmine', 'jshint', 'compress', 'copy', 'uglify', 'comments', 'jsbeautifier']);
 
 };

@@ -689,73 +689,6 @@
                 },
 
                 /**
-                 * @method loadModel
-                 * @param localCollectionName {String}
-                 * @param localKey {String}
-                 * @param foreignCollectionName {String}
-                 * @param foreignKey {String}
-                 * @param internalId {String}
-                 * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
-                 * @param defaultValue {Object|Array|Number|Boolean|Date|String|RegExp}
-                 * @return {void}
-                 */
-                loadModel: function loadModel(localCollectionName, localKey, foreignCollectionName, foreignKey, internalId, value, defaultValue) {
-
-                    var createPromise = this.createPromise.bind(this),
-                        createModel   = this.createModel.bind(this),
-                        store         = this._relationshipStore;
-
-                    /**
-                     * @method rejectPromise
-                     * @return {void}
-                     */
-                    var rejectPromise = function rejectPromise() {
-
-                        // Destroy the relationship because the model was rejected.
-                        store[localCollectionName][internalId][localKey] = defaultValue;
-
-                    };
-
-                    // Create the promise to retrieve the missing model.
-                    var promise     = createPromise(foreignCollectionName, 'read', [foreignKey, value]),
-                        promiseName = $interpolate(this._promiseName)({
-                            collection: foreignCollectionName,
-                            key:        foreignKey,
-                            value:      value
-                        });
-
-                    if (value) {
-
-                        if (this._readPromises[promiseName]) {
-
-                            // Promise has already been loaded, so we'll immediately reject the promise.
-                            return rejectPromise();
-
-                        }
-
-                        // Store so we never attempt to load the model again.
-                        this._readPromises[promiseName] = true;
-
-                    }
-
-                    promise.then(function andThen(model) {
-
-                        // Create the model which will invoke the Angular run-loop.
-                        createModel(foreignCollectionName, model);
-
-                    });
-
-                    // Otherwise we'll wait for the rejection.
-                    promise.catch(function() {
-
-                        // Destroy the relationship because the model was rejected.
-                        store[foreignCollectionName][internalId][localKey] = defaultValue;
-
-                    });
-
-                },
-
-                /**
                  * @method createHasOneRelationship
                  * @param collectionName {String}
                  * @param model {Object}
@@ -768,7 +701,7 @@
 
                     var internalId    = model[this._primaryName],
                         store         = this._relationshipStore,
-                        loadModel     = this.loadModel.bind(this);
+                        createPromise = this.createPromise.bind(this);
 
                     // Attach the property to the model relationship store.
                     store[collectionName][internalId][property] = model[property] || '';
@@ -787,10 +720,7 @@
                             var foreignModel = foreignCollection[0];
 
                             if (foreignCollection.length === 0) {
-
-                                // Lazy-load the model because now we have it!
-                                loadModel(collectionName, property, foreignCollection.name, foreignKey, internalId, entry, '');
-
+                                createPromise(foreignCollection.name, 'read', [foreignKey, entry]);
                             }
 
                             foreignCollection.unfilterAll();
@@ -824,7 +754,7 @@
 
                     var internalId    = model[this._primaryName],
                         store         = this._relationshipStore,
-                        loadModel     = this.loadModel.bind(this);
+                        createPromise = this.createPromise.bind(this);
 
                     // Attach the property to the model relationship store.
                     store[collectionName][internalId][property] = model[property] || [];
@@ -852,9 +782,21 @@
                             foreignCollection.filterBy(foreignKey, entry, inArray);
                             var foreignModels = foreignCollection.collection(Infinity);
 
-                            if (foreignModels.length < entry.length) {
+                            if (entry.length && foreignModels.length !== entry.length) {
 
-                                loadModel(collectionName, property, foreignCollection.name, foreignKey, internalId, 'Robin van Persie', []);
+                                // Determine which models need to be loaded.
+                                var values     = _.pluck(foreignModels, foreignKey),
+                                    difference = _.difference(entry, values);
+
+                                if (values.length !== 0) {
+
+                                    // Iterate over each required model to attempt to load them via
+                                    // our promise.
+                                    for (var index = 0; index < difference.length; index++) {
+                                        createPromise(foreignCollection.name, 'read', [foreignKey, difference[index]]);
+                                    }
+
+                                }
 
                             }
 
