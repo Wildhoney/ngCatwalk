@@ -750,7 +750,7 @@ describe('ngCatwalk', function() {
 
             var ferrariModel;
 
-            inject(function($rootScope, $timeout, catwalk) {
+            inject(function($rootScope, catwalk) {
 
                 $rootScope.$apply(function() {
 
@@ -803,7 +803,7 @@ describe('ngCatwalk', function() {
 
             var ferrariModel;
 
-            inject(function($rootScope, $timeout, catwalk) {
+            inject(function($rootScope, catwalk) {
 
                 $rootScope.$apply(function() {
 
@@ -863,7 +863,7 @@ describe('ngCatwalk', function() {
 
             var ferrariModel;
 
-            inject(function($rootScope, $timeout, catwalk) {
+            inject(function($rootScope, catwalk) {
 
                 var index = 2;
 
@@ -905,7 +905,7 @@ describe('ngCatwalk', function() {
 
                     ferrariModel = catwalk.createModel('car', {
                         name: 'Ferrari',
-                        colours: ['Red', 'Black', 'Green']
+                        colours: ['Red', 'Black']
                     });
 
                     expect(catwalk.collection('car').length).toEqual(1);
@@ -913,12 +913,60 @@ describe('ngCatwalk', function() {
                     catwalk.createModel('colour', { name: 'Yellow' });
                     expect(catwalk.collection('colour').length).toEqual(2);
 
+                    ferrariModel.colours.add('Green');
+
                     expect(ferrariModel.colours.length).toEqual(1);
 
                 });
 
             });
 
+        });
+        
+        it('Should be able to lazy-delete a hasMany relationship model;', function(done) {
+
+            var fordModel, blueModel;
+
+            inject(function($rootScope, catwalk) {
+
+                $rootScope.$apply(function() {
+
+                    $rootScope.$on('catwalk/delete/colour', function() {
+
+                        setTimeout(function timeout() {
+
+                            expect(fordModel.colours.length).toEqual(1);
+                            done();
+
+                        }, 2);
+
+                    });
+
+                    catwalk.collection('car', {
+                        name: catwalk.attribute.string(),
+                        colours: catwalk.relationship.hasMany({
+                            collection: 'colour',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('colour', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    fordModel = catwalk.createModel('car', { name: 'fordModel', colours: ['Blue', 'Orange'] });
+
+                    blueModel = catwalk.createModel('colour', { name: 'Blue' });
+                    catwalk.createModel('colour', { name: 'Green' });
+                    catwalk.createModel('colour', { name: 'Orange' });
+
+                    expect(fordModel.colours.length).toEqual(2);
+                    catwalk.deleteModel('colour', blueModel);
+
+                });
+
+            });
+            
         });
 
     });
