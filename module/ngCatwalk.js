@@ -290,6 +290,7 @@
                         this._collections[name].primaryKey(this._primaryName);
                         this._collections[name].blueprint = properties;
                         this._collections[name].index     = 0;
+                        this._collections[name].name      = name;
 
                         this._propertyIterator(properties, function iterator(property) {
 
@@ -686,8 +687,10 @@
                  */
                 createHasOneRelationship: function createHasOneRelationship(collectionName, model, property, foreignCollection, foreignKey) {
 
-                    var internalId = model[this._primaryName],
-                        store      = this._relationshipStore;
+                    var internalId    = model[this._primaryName],
+                        store         = this._relationshipStore,
+                        createPromise = this.createPromise.bind(this),
+                        createModel   = this.createModel.bind(this);
 
                     // Attach the property to the model relationship store.
                     store[collectionName][internalId][property] = model[property] || '';
@@ -701,8 +704,32 @@
                         get: function get() {
 
                             // Filter the foreign collection by the value we've defined on the local model.
-                            foreignCollection.filterBy(foreignKey, store[collectionName][internalId][property]);
+                            var value = store[collectionName][internalId][property];
+                            foreignCollection.filterBy(foreignKey, value);
                             var foreignModel = foreignCollection[0];
+
+                            if (foreignCollection.length === 0) {
+
+                                // Create the promise to retrieve the missing model.
+                                var promise = createPromise(collectionName, 'read', [foreignKey, value]);
+
+                                promise.then(function andThen(model) {
+
+                                    // Create the model which will invoke the Angular run-loop.
+                                    createModel(foreignCollection.name, model);
+
+                                });
+
+                                // Otherwise we'll wait for the rejection.
+                                promise.catch(function andCatch() {
+
+                                    // Destroy the relationship because the model was rejected.
+                                    store[collectionName][internalId][property] = '';
+                                    
+                                });
+
+                            }
+
                             foreignCollection.unfilterAll();
                             return foreignModel;
 

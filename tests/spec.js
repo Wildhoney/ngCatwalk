@@ -459,6 +459,45 @@ describe('ngCatwalk', function() {
 
         });
 
+        describe('Read', function() {
+
+            it('Should be able to read a model;', inject(function ($rootScope, catwalk) {
+
+                $rootScope.$on('catwalk/read/team', function(event, deferred, property, value) {
+
+                    expect(property).toEqual('name');
+                    expect(value).toEqual('Brazil');
+
+                    deferred.resolve({
+                        name: 'Brazil'
+                    });
+
+                });
+
+                catwalk.collection('team', {
+                    name:   catwalk.attribute.string(),
+                    versus: catwalk.relationship.hasOne({
+                        collection: 'team',
+                        foreignKey: 'name'
+                    })
+                });
+
+                var netherlandsModel = catwalk.createModel('team', {
+                    name: 'Netherlands',
+                    versus: 'Brazil'
+                });
+
+                $rootScope.$digest();
+                expect(catwalk.collection('team').length).toEqual(1);
+                expect(typeof netherlandsModel.versus.add).toEqual('function');
+                $rootScope.$digest();
+                expect(netherlandsModel.versus.name).toEqual('Brazil');
+                expect(catwalk.collection('team').length).toEqual(2);
+
+            }));
+
+        });
+
         describe('Update', function() {
 
             it('Should be able to update a model;', inject(function(catwalk) {
