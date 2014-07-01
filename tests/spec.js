@@ -199,7 +199,7 @@ describe('ngCatwalk', function() {
 
                     englandModel.manager = 'Roy Hodgson';
                     expect(englandModel.manager.name).toEqual('Roy Hodgson');
-                    
+
                 });
 
             }));
@@ -742,6 +742,123 @@ describe('ngCatwalk', function() {
 
         });
 
+    });
+
+    describe('Asynchronicity', function() {
+
+        it('Should be able to lazy-load a hasOne relationship model;', function(done) {
+
+            var ferrariModel;
+
+            inject(function($rootScope, $timeout, catwalk) {
+
+                $rootScope.$apply(function() {
+
+                    $rootScope.$on('catwalk/read/colour', function() {
+
+                        setTimeout(function timeout() {
+
+                            catwalk.createModel('colour', { name: 'Red' });
+
+                            expect(ferrariModel.colour.name).toEqual('Red');
+                            expect(catwalk.collection('colour').length).toEqual(4);
+
+                            done();
+
+                        }, 500);
+
+                    });
+
+                    catwalk.collection('car', {
+                        name: catwalk.attribute.string(),
+                        colour: catwalk.relationship.hasOne({
+                            collection: 'colour',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('colour', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    ferrariModel = catwalk.createModel('car', {
+                        name: 'Ferrari',
+                        colour: 'Red'
+                    });
+
+                    expect(catwalk.collection('car').length).toEqual(1);
+
+                    catwalk.createModel('colour', { name: 'Green' });
+                    catwalk.createModel('colour', { name: 'Blue' });
+                    catwalk.createModel('colour', { name: 'Yellow' });
+                    expect(catwalk.collection('colour').length).toEqual(3);
+
+                });
+
+            });
+
+        });
+
+        it('Should be able to lazy-load a hasMany relationship model;', function(done) {
+
+            var ferrariModel;
+
+            inject(function($rootScope, $timeout, catwalk) {
+
+                $rootScope.$apply(function() {
+
+                    $rootScope.$on('catwalk/read/colour', function() {
+
+                        setTimeout(function timeout() {
+
+                            expect(ferrariModel.colours.length).toEqual(1);
+
+                            catwalk.createModel('colour', { name: 'Black' });
+
+                            expect(ferrariModel.colours.length).toEqual(2);
+                            expect(ferrariModel.colours[0].name).toEqual('Red');
+                            expect(ferrariModel.colours[1].name).toEqual('Black');
+                            expect(catwalk.collection('colour').length).toEqual(5);
+
+                            done();
+
+                        }, 500);
+
+                    });
+
+                    catwalk.collection('car', {
+                        name: catwalk.attribute.string(),
+                        colours: catwalk.relationship.hasMany({
+                            collection: 'colour',
+                            foreignKey: 'name'
+                        })
+                    });
+
+                    catwalk.collection('colour', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    ferrariModel = catwalk.createModel('car', {
+                        name: 'Ferrari',
+                        colours: ['Red', 'Black']
+                    });
+
+                    expect(catwalk.collection('car').length).toEqual(1);
+
+                    catwalk.createModel('colour', { name: 'Green' });
+                    catwalk.createModel('colour', { name: 'Red' });
+                    catwalk.createModel('colour', { name: 'Blue' });
+                    catwalk.createModel('colour', { name: 'Yellow' });
+
+                    expect(catwalk.collection('colour').length).toEqual(4);
+                    expect(ferrariModel.colours.length).toEqual(1);
+
+                });
+
+            });
+
+        });
+        
     });
 
 });
