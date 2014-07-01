@@ -42,6 +42,10 @@
         }
     };
     var ngCatwalkRelationship = {
+        TYPES: {
+            ONE: 'One',
+            MANY: 'Many'
+        },
         One: function One( options ) {
             this.getOptions = function getOptions() {
                 return options;
@@ -64,10 +68,10 @@
                 attribute: ngCatwalkAttribute,
                 relationship: {
                     hasOne: function hasOne( options ) {
-                        return new ngCatwalkRelationship.One( options );
+                        return new ngCatwalkRelationship[ ngCatwalkRelationship.TYPES.ONE ]( options );
                     },
                     hasMany: function hasMany( options ) {
-                        return new ngCatwalkRelationship.Many( options );
+                        return new ngCatwalkRelationship[ ngCatwalkRelationship.TYPES.MANY ]( options );
                     }
                 },
                 _primaryName: '_catwalkId',
@@ -86,11 +90,9 @@
                         this._collections[ name ].primaryKey( this._primaryName );
                         this._collections[ name ].blueprint = properties;
                         this._collections[ name ].index = 0;
-                        for ( var property in properties ) {
-                            if ( properties.hasOwnProperty( property ) ) {
-                                this._collections[ name ].addDimension( property );
-                            }
-                        }
+                        this._propertyIterator( properties, function iterator( property ) {
+                            this._collections[ name ].addDimension( property );
+                        } );
                     }
                     return this._collections[ name ];
                 },
@@ -210,10 +212,10 @@
                     } )();
                     var method = 'throwRelationshipException';
                     switch ( this.getRelationshipType( collectionName, property ) ) {
-                    case ( 'One' ):
+                    case ( ngCatwalkRelationship.TYPES.ONE ):
                         method = 'createHasOneRelationship';
                         break;
-                    case ( 'Many' ):
+                    case ( ngCatwalkRelationship.TYPES.MANY ):
                         method = 'createHasManyRelationship';
                         break;
                     }
@@ -230,11 +232,11 @@
                             relationshipType = this.getRelationshipType( relationshipData.localCollection, relationshipData.localProperty );
                         for ( var index = 0; index < models.length; index++ ) {
                             switch ( relationshipType ) {
-                            case ( 'Many' ):
-                                models[ index ][ relationshipData.localProperty ].remove( valueToDelete );
-                                break;
-                            case ( 'One' ):
+                            case ( ngCatwalkRelationship.TYPES.ONE ):
                                 models[ index ][ relationshipData.localProperty ] = '';
+                                break;
+                            case ( ngCatwalkRelationship.TYPES.MANY ):
+                                models[ index ][ relationshipData.localProperty ].remove( valueToDelete );
                                 break;
                             }
                         }
@@ -329,10 +331,9 @@
                 },
                 getRelationshipType: function getRelationshipType( collectionName, property ) {
                     var propertyBlueprint = this.collection( collectionName ).blueprint[ property ],
-                        relationships = {
-                            One: ngCatwalkRelationship.One,
-                            Many: ngCatwalkRelationship.Many
-                        };
+                        relationships = {};
+                    relationships[ ngCatwalkRelationship.TYPES.ONE ] = ngCatwalkRelationship.One;
+                    relationships[ ngCatwalkRelationship.TYPES.MANY ] = ngCatwalkRelationship.Many;
                     for ( var index in relationships ) {
                         if ( relationships.hasOwnProperty( index ) ) {
                             if ( propertyBlueprint instanceof relationships[ index ] ) {
