@@ -142,12 +142,10 @@
                     var promise = this.createPromise( collectionName, 'update', [ model ] );
                     promise.then( this.resolveUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
                     promise.catch( this.rejectUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
-                    this.pruneRelationships( collectionName, updatedProperties );
                     return model;
                 },
                 resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
                     return function resolvePromise() {
-                        console.log( "Never gets here?" );
                         this.pruneRelationships( collectionName, updatedProperties );
                     }
                 },
