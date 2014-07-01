@@ -922,10 +922,43 @@ describe('ngCatwalk', function() {
             });
 
         });
+
+        it('Should be able to reject the lazy-deletion of a model;', function(done) {
+
+            inject(function($rootScope, catwalk) {
+
+                $rootScope.$apply(function () {
+
+                    $rootScope.$on('catwalk/delete/player', function(event, deferred) {
+
+                        deferred.reject();
+
+                        setTimeout(function timeout() {
+                            
+                            expect(catwalk.collection('player').length).toEqual(1);
+                            done();
+
+                        }, 10);
+
+                    });
+
+                    catwalk.collection('player', {
+                        name: catwalk.attribute.string()
+                    });
+
+                    var messiModel = catwalk.createModel('player', { name: 'Lionel Messi' });
+                    expect(catwalk.collection('player').length).toEqual(1);
+                    catwalk.deleteModel('player', messiModel);
+
+                });
+
+            });
+
+        });
         
         it('Should be able to lazy-delete a hasMany relationship model;', function(done) {
 
-            var fordModel, blueModel;
+            var fordModel;
 
             inject(function($rootScope, catwalk) {
 
@@ -938,7 +971,7 @@ describe('ngCatwalk', function() {
                             expect(fordModel.colours.length).toEqual(1);
                             done();
 
-                        }, 2);
+                        }, 10);
 
                     });
 
@@ -956,7 +989,7 @@ describe('ngCatwalk', function() {
 
                     fordModel = catwalk.createModel('car', { name: 'fordModel', colours: ['Blue', 'Orange'] });
 
-                    blueModel = catwalk.createModel('colour', { name: 'Blue' });
+                    var blueModel = catwalk.createModel('colour', { name: 'Blue' });
                     catwalk.createModel('colour', { name: 'Green' });
                     catwalk.createModel('colour', { name: 'Orange' });
 
