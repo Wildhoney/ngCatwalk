@@ -113,6 +113,12 @@
     var ngCatwalkRelationship = {
 
         /**
+         * @constant TYPES
+         * @type {Object}
+         */
+        TYPES: { ONE: 'One', MANY: 'Many' },
+
+        /**
          * @method One
          * @param options {Object}
          * @constructor
@@ -203,7 +209,7 @@
                      * @return {ngCatwalkRelationship.One}
                      */
                     hasOne: function hasOne(options) {
-                        return new ngCatwalkRelationship.One(options);
+                        return new ngCatwalkRelationship[ngCatwalkRelationship.TYPES.ONE](options);
                     },
 
                     /**
@@ -212,7 +218,7 @@
                      * @return {ngCatwalkRelationship.Many}
                      */
                     hasMany: function hasMany(options) {
-                        return new ngCatwalkRelationship.Many(options);
+                        return new ngCatwalkRelationship[ngCatwalkRelationship.TYPES.MANY](options);
                     }
 
                 },
@@ -285,16 +291,12 @@
                         this._collections[name].blueprint = properties;
                         this._collections[name].index     = 0;
 
-                        for (var property in properties) {
+                        this._propertyIterator(properties, function iterator(property) {
 
-                            if (properties.hasOwnProperty(property)) {
+                            // Define the dimension.
+                            this._collections[name].addDimension(property);
 
-                                // Define the dimension.
-                                this._collections[name].addDimension(property);
-
-                            }
-
-                        }
+                        });
 
                     }
 
@@ -608,8 +610,8 @@
                     // invalid relationship.
                     switch (this.getRelationshipType(collectionName, property)) {
 
-                        case ('One'):  method = 'createHasOneRelationship'; break;
-                        case ('Many'): method = 'createHasManyRelationship'; break;
+                        case (ngCatwalkRelationship.TYPES.ONE):  method = 'createHasOneRelationship'; break;
+                        case (ngCatwalkRelationship.TYPES.MANY): method = 'createHasManyRelationship'; break;
 
                     }
 
@@ -649,12 +651,12 @@
 
                             switch (relationshipType) {
 
-                                case ('Many'):
-                                    models[index][relationshipData.localProperty].remove(valueToDelete);
+                                case (ngCatwalkRelationship.TYPES.ONE):
+                                    models[index][relationshipData.localProperty] = '';
                                     break;
 
-                                case ('One'):
-                                    models[index][relationshipData.localProperty] = '';
+                                case (ngCatwalkRelationship.TYPES.MANY):
+                                    models[index][relationshipData.localProperty].remove(valueToDelete);
                                     break;
 
                             }
@@ -909,10 +911,11 @@
                 getRelationshipType: function getRelationshipType(collectionName, property) {
 
                     var propertyBlueprint = this.collection(collectionName).blueprint[property],
-                        relationships     = {
-                            One: ngCatwalkRelationship.One,
-                            Many: ngCatwalkRelationship.Many
-                        };
+                        relationships     = {};
+
+                    // Define the relationships using the constants.
+                    relationships[ngCatwalkRelationship.TYPES.ONE]  = ngCatwalkRelationship.One;
+                    relationships[ngCatwalkRelationship.TYPES.MANY] = ngCatwalkRelationship.Many;
 
                     for (var index in relationships) {
 
