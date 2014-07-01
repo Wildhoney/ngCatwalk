@@ -858,7 +858,7 @@ describe('ngCatwalk', function() {
             });
 
         });
-        
+
     });
 
 });
