@@ -128,7 +128,7 @@
                         } );
                     };
                 },
-                updateModel: function updateModel( collectionName, model, properties ) {
+                updateModel: function updateModel( collectionName, oldModel, properties ) {
                     var blueprint = this.collection( collectionName ).blueprint,
                         updatedProperties = {};
                     this._propertyIterator( properties, function iterator( property ) {
@@ -138,23 +138,29 @@
                         if ( !$angular.isDefined( blueprint[ property ] ) ) {
                             return;
                         }
-                        updatedProperties[ property ] = model[ property ];
-                        model[ property ] = properties[ property ];
+                        updatedProperties[ property ] = properties[ property ];
                     } );
-                    var promise = this.createPromise( collectionName, 'update', [ model ] );
-                    promise.then( this.resolveUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
-                    promise.catch( this.rejectUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
-                    return model;
+                    var newModel = _.extend( _.clone( oldModel ), updatedProperties );
+                    newModel[ this._primaryName ] = ++this.collection( collectionName ).index;
+                    this.silently( function silently() {
+                        this.deleteModel( collectionName, oldModel );
+                        this.createModel( collectionName, newModel );
+                    } );
+                    var promise = this.createPromise( collectionName, 'update', [ newModel, oldModel ] );
+                    promise.then( this.resolveUpdateModel( collectionName, oldModel, newModel ).bind( this ) );
+                    promise.catch( this.rejectUpdateModel( collectionName, oldModel, newModel ).bind( this ) );
+                    return newModel;
                 },
-                resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
+                resolveUpdateModel: function resolveUpdateModel( collectionName, oldModel, newModel ) {
                     return function resolvePromise() {
-                        this.pruneRelationships( collectionName, updatedProperties );
+                        this.pruneRelationships( collectionName, newModel );
                     }
                 },
-                rejectUpdateModel: function rejectUpdateModel( collectionName, model, oldProperties ) {
+                rejectUpdateModel: function rejectUpdateModel( collectionName, oldModel, newModel ) {
                     return function rejectPromise() {
-                        this._propertyIterator( oldProperties, function iterator( property ) {
-                            model[ property ] = oldProperties[ property ];
+                        this.silently( function silently() {
+                            this.collection( collectionName ).restoreModel( oldModel );
+                            this.deleteModel( collectionName, newModel );
                         } );
                     };
                 },

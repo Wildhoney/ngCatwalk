@@ -11,6 +11,10 @@
          */
         $scope.catName = 'Kipper';
 
+        $scope.$on('catwalk/update/cat', function(event, deferred) {
+            deferred.resolve();
+        });
+
         /**
          * @property cats
          * @type {Array}

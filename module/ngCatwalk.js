@@ -394,11 +394,11 @@
                 /**
                  * @method updateModel
                  * @param collectionName {String}
-                 * @param model {Object}
+                 * @param oldModel {Object}
                  * @param properties {Object}
                  * @return {Object}
                  */
-                updateModel: function updateModel(collectionName, model, properties) {
+                updateModel: function updateModel(collectionName, oldModel, properties) {
 
                     var blueprint         = this.collection(collectionName).blueprint,
                         updatedProperties = {};
@@ -416,36 +416,41 @@
                         }
 
                         // Keep a track of the original properties for the pruning of the relationships.
-                        updatedProperties[property] = model[property];
-
-                        // Update the model with that specified.
-                        model[property] = properties[property];
+                        updatedProperties[property] = properties[property];
 
                     });
 
-                    var promise = this.createPromise(collectionName, 'update', [model]);
+                    var newModel                = _.extend(_.clone(oldModel), updatedProperties);
+                    newModel[this._primaryName] = ++this.collection(collectionName).index;
+
+                    this.silently(function silently() {
+                        this.deleteModel(collectionName, oldModel);
+                        this.createModel(collectionName, newModel);
+                    });
+
+                    var promise = this.createPromise(collectionName, 'update', [newModel, oldModel]);
 
                     // Promise resolution.
-                    promise.then(this.resolveUpdateModel(collectionName, model, updatedProperties).bind(this));
-                    promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
+                    promise.then(this.resolveUpdateModel(collectionName, oldModel, newModel).bind(this));
+                    promise.catch(this.rejectUpdateModel(collectionName, oldModel, newModel).bind(this));
 
-                    return model;
+                    return newModel;
 
                 },
 
                 /**
                  * @method resolveUpdateModel
                  * @param collectionName {String}
-                 * @param model {Object}
-                 * @param updatedProperties {Object}
+                 * @param oldModel {Object}
+                 * @param newModel {Object}
                  * @return {Function}
                  */
-                resolveUpdateModel: function resolveUpdateModel(collectionName, model, updatedProperties) {
+                resolveUpdateModel: function resolveUpdateModel(collectionName, oldModel, newModel) {
 
                     return function resolvePromise() {
 
                         // Update relationships to remove any ghost references.
-                        this.pruneRelationships(collectionName, updatedProperties);
+                        this.pruneRelationships(collectionName, newModel);
 
                     }
 
@@ -454,16 +459,19 @@
                 /**
                  * @method rejectUpdateModel
                  * @param collectionName {String}
-                 * @param model {Object}
-                 * @param oldProperties {Object}
+                 * @param oldModel {Object}
+                 * @param newModel {Object}
                  * @return {Function}
                  */
-                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
+                rejectUpdateModel: function rejectUpdateModel(collectionName, oldModel, newModel) {
 
                     return function rejectPromise() {
 
-                        this._propertyIterator(oldProperties, function iterator(property) {
-                            model[property] = oldProperties[property];
+                        this.silently(function silently() {
+
+                            this.collection(collectionName).restoreModel(oldModel);
+                            this.deleteModel(collectionName, newModel);
+
                         });
 
                     };
