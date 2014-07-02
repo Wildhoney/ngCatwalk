@@ -233,7 +233,7 @@
                             return;
                         }
                         var valueToDelete = model[ relationshipData.foreignProperty ],
-                            models = this.collection( relationshipData.localCollection ),
+                            models = this.collection( relationshipData.localCollection ).collection(),
                             relationshipType = this.getRelationshipType( relationshipData.localCollection, relationshipData.localProperty );
                         for ( var index = 0; index < models.length; index++ ) {
                             switch ( relationshipType ) {
@@ -283,7 +283,7 @@
                     $object.defineProperty( model, property, {
                         get: function get() {
                             foreignCollection.filterBy( foreignKey, entry, inArray );
-                            var foreignModels = foreignCollection.collection( Infinity );
+                            var foreignModels = foreignCollection.collection();
                             if ( entry.length && foreignModels.length !== entry.length ) {
                                 var values = _.pluck( foreignModels, foreignKey ),
                                     difference = _.difference( entry, values );

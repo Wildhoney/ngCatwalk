@@ -645,7 +645,7 @@
                         // Locate the value from the modified model that needs to be removed from any
                         // relevant relationships.
                         var valueToDelete    = model[relationshipData.foreignProperty],
-                            models           = this.collection(relationshipData.localCollection),
+                            models           = this.collection(relationshipData.localCollection).collection(),
                             relationshipType = this.getRelationshipType(relationshipData.localCollection, relationshipData.localProperty);
 
                         // Iterate over each model to remove the `valueToDelete` from the relationship.
@@ -775,7 +775,7 @@
 
                             // Fetch all of the models that pertain to our relationship array.
                             foreignCollection.filterBy(foreignKey, entry, inArray);
-                            var foreignModels = foreignCollection.collection(Infinity);
+                            var foreignModels = foreignCollection.collection();
 
                             if (entry.length && foreignModels.length !== entry.length) {
 
