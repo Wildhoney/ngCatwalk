@@ -400,34 +400,22 @@
                  */
                 updateModel: function updateModel(collectionName, model, properties) {
 
-                    var blueprint         = this.collection(collectionName).blueprint,
-                        updatedProperties = {};
+                    // Create a representation of the new model.
+                    var newModel = _.extend(_.clone(model), properties);
 
-                    this._propertyIterator(properties, function iterator(property) {
+                    this.silently(function silently() {
 
-                        // Exclude properties that are part of relationships from being updated.
-                        if (this.getRelationshipType(collectionName, property)) {
-                            return;
-                        }
-
-                        // Exclude properties that aren't in the blueprint.
-                        if (!$angular.isDefined(blueprint[property])) {
-                            return;
-                        }
-
-                        // Keep a track of the original properties for the pruning of the relationships.
-                        updatedProperties[property] = model[property];
-
-                        // Update the model with that specified.
-                        model[property] = properties[property];
+                        // Silently create the new model, and delete the old model.
+                        this.createModel(collectionName, newModel);
+                        this.deleteModel(collectionName, model);
 
                     });
 
                     var promise = this.createPromise(collectionName, 'update', [model]);
 
-                    // Promise resolution.
-                    promise.then(this.resolveUpdateModel(collectionName, model, updatedProperties).bind(this));
-                    promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
+//                    // Promise resolution.
+                    promise.then(this.resolveUpdateModel(collectionName, model, properties).bind(this));
+//                    promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
 
                     return model;
 
