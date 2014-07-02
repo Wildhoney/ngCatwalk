@@ -401,7 +401,20 @@
                 updateModel: function updateModel(collectionName, model, properties) {
 
                     // Create a representation of the new model.
-                    var newModel = _.extend(_.clone(model), properties);
+                    var newModel   = _.extend(_.clone(model), properties),
+                        internalId = model[this._primaryName];
+
+                    // Setup the relationships.
+                    this._propertyIterator(newModel, function iterator(property) {
+
+                        if (this.getRelationshipType(collectionName, property)) {
+
+                            // Update the new model with the previous relational data.
+                            newModel[property] = this._relationshipStore[collectionName][internalId][property];
+
+                        }
+
+                    });
 
                     this.silently(function silently() {
 
