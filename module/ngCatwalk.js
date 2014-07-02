@@ -169,7 +169,7 @@
          * @param Crossfilter {Function}
          * @return {Object}
          */
-        function CatwalkService($rootScope, $q, $interpolate, Crossfilter) {
+            function CatwalkService($rootScope, $q, $interpolate, Crossfilter) {
 
             /**
              * @module ngCatwalk
@@ -190,6 +190,49 @@
              * @type {Object}
              */
             Catwalk.prototype = {
+
+                /**
+                 * @property _collections
+                 * @type {Object}
+                 * @private
+                 */
+                _collections: {},
+
+                /**
+                 * @property _primaryName
+                 * @type {String}
+                 */
+                _primaryName: '_catwalkId',
+
+                /**
+                 * @property _relationshipStore
+                 * @type {Object}
+                 */
+                _relationshipStore: {},
+
+                /**
+                 * @property _relationships
+                 * @type {Object}
+                 */
+                _relationships: {},
+
+                /**
+                 * @property _silent
+                 * @type {Boolean}
+                 */
+                _silent: false,
+
+                /**
+                 * @property _eventName
+                 * @type {String}
+                 */
+                _eventName: 'catwalk/{{type}}/{{collection}}',
+
+                /**
+                 * @property _relationshipName
+                 * @type {String}
+                 */
+                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
 
                 /**
                  * @property attribute
@@ -224,61 +267,6 @@
                 },
 
                 /**
-                 * @property _primaryName
-                 * @type {String}
-                 */
-                _primaryName: '_catwalkId',
-
-                /**
-                 * @property _relationshipStore
-                 * @type {Object}
-                 */
-                _relationshipStore: {},
-
-                /**
-                 * @property _readPromises
-                 * @type {Object}
-                 */
-                _readPromises: {},
-
-                /**
-                 * @property _relationships
-                 * @type {Object}
-                 */
-                _relationships: {},
-
-                /**
-                 * @property _silent
-                 * @type {Boolean}
-                 */
-                _silent: false,
-
-                /**
-                 * @property _eventName
-                 * @type {String}
-                 */
-                _eventName: 'catwalk/{{type}}/{{collection}}',
-
-                /**
-                 * @property _promiseName
-                 * @type {String}
-                 */
-                _promiseName: 'catwalk/promise/{{collection}}/{{key}}/{{value}}',
-
-                /**
-                 * @property _relationshipName
-                 * @type {String}
-                 */
-                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
-
-                /**
-                 * @property _collections
-                 * @type {Object}
-                 * @private
-                 */
-                _collections: {},
-
-                /**
                  * @method collection
                  * @param name {String}
                  * @param properties {Object}
@@ -289,7 +277,7 @@
                     if (!this._collections[name]) {
 
                         // Create the empty collection.
-                        this._collections[name] = new Crossfilter([]);
+                        this._collections[name] = new Crossfilter([], this._primaryName);
 
                     }
 
@@ -299,7 +287,6 @@
                         properties[this._primaryName] = this.attribute.number();
 
                         // Create the collection if we've defined the properties;
-                        this._collections[name].primaryKey(this._primaryName);
                         this._collections[name].blueprint = properties;
                         this._collections[name].index     = 0;
                         this._collections[name].name      = name;
@@ -313,7 +300,6 @@
 
                     }
 
-                    // Otherwise we'll retrieve the collection.
                     return this._collections[name];
 
                 },
@@ -494,6 +480,7 @@
 
                     // Delete the model from the collection and generate the promise.
                     this.collection(collectionName).deleteModel(model);
+
                     var promise = this.createPromise(collectionName, 'delete', [model]);
 
                     // Promise resolution.
@@ -720,7 +707,7 @@
 
                             // Filter the foreign collection by the value we've defined on the local model.
                             foreignCollection.filterBy(foreignKey, entry);
-                            var foreignModel = foreignCollection[0];
+                            var foreignModel = foreignCollection.collection()[0];
 
                             if (entry.length && foreignCollection.length === 0) {
 
@@ -730,9 +717,9 @@
 
                             }
 
-                            foreignCollection.unfilterAll();
+                            foreignCollection.unfilterBy(foreignKey);
 
-                            return foreignModel;
+                            return foreignModel || {};
 
                         },
 
@@ -808,7 +795,7 @@
 
                             }
 
-                            foreignCollection.unfilterAll();
+                            foreignCollection.unfilterBy(foreignKey);
 
                             /**
                              * @method add
@@ -855,7 +842,7 @@
                                 return entry.indexOf(value) !== -1;
                             };
 
-                            return foreignModels;
+                            return foreignModels || [];
 
                         },
 

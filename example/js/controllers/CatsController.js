@@ -15,16 +15,13 @@
          * @property cats
          * @type {Array}
          */
-        $scope.cats = catwalk.collection('cat');
-
-        // Create our cat collection.
-        catwalk.collection('cat', {
+        $scope.cats = catwalk.collection('cat', {
 
             /**
              * @property id
-             *
+             * @type {Number}
              */
-            id: catwalk.attribute.autoincrement(),
+            id: catwalk.attribute.autoIncrement(),
 
             /**
              * @property name
@@ -34,7 +31,7 @@
 
             /**
              * @property friends
-             * @type {Object}
+             * @type {Array}
              */
             friends: catwalk.relationship.hasMany({
                 collection: 'cat',
@@ -43,56 +40,18 @@
 
         });
 
-        $scope.$on('catwalk/create/cat', function(event, deferred, model) {
-            deferred.resolve();
-        });
-
-        $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
-            deferred.resolve();
-        });
-
-        $scope.$on('catwalk/update/cat', function(event, deferred, model) {
-            deferred.resolve();
-        });
-
-        $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
-            deferred.reject();
-        });
-
         /**
-         * @property createCat
+         * @method createCat
          * @param name {String}
          * @return {void}
          */
         $scope.createCat = function createCat(name) {
 
-            // Create our cat model!
-            catwalk.createModel('cat', { name: name });
+            catwalk.createModel('cat', {
+                name: name
+            });
 
-            // ...And reset the name property.
-            $scope.catName = '';
-
-        };
-
-        /**
-         * @method hasFriend
-         * @param model {Object}
-         * @param name {String}
-         * @return {Boolean}
-         */
-        $scope.hasFriend = function hasFriend(model, name) {
-            return model.friends.hasModel(name);
-        };
-
-        /**
-         * @method deleteCat
-         * @param model {Object}
-         * @return {void}
-         */
-        $scope.deleteCat = function deleteCat(model) {
-
-            // Delete our cat model!
-            catwalk.deleteModel('cat', model);
+            $scope.catName = 'Mango';
 
         };
 
@@ -102,13 +61,31 @@
          * @param name {String}
          * @return {void}
          */
-        $scope.updateCatName = function updateCat(model, name) {
+        $scope.updateCatName = function updateCatName(model, name) {
 
-            // Update our cat model with a new name!
             catwalk.updateModel('cat', model, {
                 name: name
             });
 
+        };
+
+        /**
+         * @method deleteCat
+         * @param model {Object}
+         * @return {void}
+         */
+        $scope.deleteCat = function deleteCat(model) {
+            catwalk.deleteModel('cat', model);
+        };
+
+        /**
+         * @method hasFriend
+         * @param model {Object}
+         * @param name {String}
+         * @return {Boolean}
+         */
+        $scope.hasFriend = function hasFriend(model, name) {
+            return model.friends.has(name);
         };
 
         /**
@@ -119,12 +96,12 @@
          */
         $scope.addFriend = function addFriend(model, name) {
 
-            if (model.friends.hasModel(name)) {
-                model.friends.deleteModel(name);
+            if ($scope.hasFriend(model, name)) {
+                model.friends.remove(name);
                 return;
             }
 
-            model.friends.addModel(name);
+            model.friends.add(name);
 
         };
 

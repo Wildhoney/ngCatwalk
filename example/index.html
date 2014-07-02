@@ -8,6 +8,7 @@
     <!-- Dependencies! -->
     <script type="text/javascript" src="js/vendor/angular/angular.js"></script>
     <script type="text/javascript" src="js/vendor/crossfilter/crossfilter.js"></script>
+    <script type="text/javascript" src="js/vendor/underscore/underscore.js"></script>
     <script type="text/javascript" src="js/vendor/ng-crossfilter/dist/ng-crossfilter.js"></script>
     <script type="text/javascript" src="js/vendor/ng-catwalk/ng-catwalk.js"></script>
 
@@ -29,17 +30,11 @@
         <span class="input-group-addon button" ng-click="createCat(catName)">Add</span>
     </div>
 
-    <div class="input-group colour">
-        <span class="input-group-addon">Colour:</span>
-        <input ng-model="colourName" type="text" class="form-control">
-        <span class="input-group-addon button" ng-click="createColour(colourName)">Add</span>
-    </div>
-
     <!--<h1>Cats ({{cats.length}})</h1>-->
-    <h1>Collection ({{cats.length}})</h1>
+    <h1>Collection ({{cats.collection().length}})</h1>
 
     <ul>
-        <li ng-repeat="cat in cats">
+        <li ng-repeat="cat in cats.collection()">
 
             {{cat.name}} (id: {{cat.id}}) has {{cat.friends.length}}
             friends (<a href="#" ng-click="deleteCat(cat)">Delete</a>)
@@ -58,7 +53,7 @@
             </ul>
 
             <ul>
-                <li ng-repeat="friend in cats">
+                <li ng-repeat="friend in cats.collection()">
                     <input type="checkbox" ng-checked="hasFriend(cat, friend.name)" ng-click="addFriend(cat, friend.name)" />
                     {{friend.name}}
                 </li>

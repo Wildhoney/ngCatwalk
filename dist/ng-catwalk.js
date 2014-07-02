@@ -65,6 +65,13 @@
                 this._relationshipStore = {};
             }
             Catwalk.prototype = {
+                _collections: {},
+                _primaryName: '_catwalkId',
+                _relationshipStore: {},
+                _relationships: {},
+                _silent: false,
+                _eventName: 'catwalk/{{type}}/{{collection}}',
+                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
                 attribute: ngCatwalkAttribute,
                 relationship: {
                     hasOne: function hasOne( options ) {
@@ -74,22 +81,12 @@
                         return new ngCatwalkRelationship[ ngCatwalkRelationship.TYPES.MANY ]( options );
                     }
                 },
-                _primaryName: '_catwalkId',
-                _relationshipStore: {},
-                _readPromises: {},
-                _relationships: {},
-                _silent: false,
-                _eventName: 'catwalk/{{type}}/{{collection}}',
-                _promiseName: 'catwalk/promise/{{collection}}/{{key}}/{{value}}',
-                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
-                _collections: {},
                 collection: function collection( name, properties ) {
                     if ( !this._collections[ name ] ) {
-                        this._collections[ name ] = new Crossfilter( [] );
+                        this._collections[ name ] = new Crossfilter( [], this._primaryName );
                     }
                     if ( properties ) {
                         properties[ this._primaryName ] = this.attribute.number();
-                        this._collections[ name ].primaryKey( this._primaryName );
                         this._collections[ name ].blueprint = properties;
                         this._collections[ name ].index = 0;
                         this._collections[ name ].name = name;
@@ -262,12 +259,12 @@
                         get: function get() {
                             var entry = store[ collectionName ][ internalId ][ property ];
                             foreignCollection.filterBy( foreignKey, entry );
-                            var foreignModel = foreignCollection[ 0 ];
+                            var foreignModel = foreignCollection.collection()[ 0 ];
                             if ( entry.length && foreignCollection.length === 0 ) {
                                 createPromise( foreignCollection.name, 'read', [ foreignKey, entry ] );
                             }
-                            foreignCollection.unfilterAll();
-                            return foreignModel;
+                            foreignCollection.unfilterBy( foreignKey );
+                            return foreignModel || {};
                         },
                         set: function set( value ) {
                             store[ collectionName ][ internalId ][ property ] = value;
@@ -296,7 +293,7 @@
                                     }
                                 }
                             }
-                            foreignCollection.unfilterAll();
+                            foreignCollection.unfilterBy( foreignKey );
                             foreignModels.add = function add( value ) {
                                 if ( !foreignModels.has( value ) ) {
                                     entry.push( value );
@@ -314,7 +311,7 @@
                             foreignModels.has = function has( value ) {
                                 return entry.indexOf( value ) !== -1;
                             };
-                            return foreignModels;
+                            return foreignModels || [];
                         },
                         set: function set( value ) {
                             if ( entry.indexOf( value ) === -1 ) {
