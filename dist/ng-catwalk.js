@@ -129,21 +129,20 @@
                     };
                 },
                 updateModel: function updateModel( collectionName, model, properties ) {
-                    var blueprint = this.collection( collectionName ).blueprint,
-                        updatedProperties = {};
-                    this._propertyIterator( properties, function iterator( property ) {
+                    var newModel = _.extend( _.clone( model ), properties ),
+                        internalId = model[ this._primaryName ];
+                    this._propertyIterator( newModel, function iterator( property ) {
                         if ( this.getRelationshipType( collectionName, property ) ) {
-                            return;
+                            newModel[ property ] = this._relationshipStore[ collectionName ][ internalId ][ property ];
                         }
-                        if ( !$angular.isDefined( blueprint[ property ] ) ) {
-                            return;
-                        }
-                        updatedProperties[ property ] = model[ property ];
-                        model[ property ] = properties[ property ];
+                    } );
+                    this.silently( function silently() {
+                        this.createModel( collectionName, newModel );
+                        this.deleteModel( collectionName, model );
                     } );
                     var promise = this.createPromise( collectionName, 'update', [ model ] );
-                    promise.then( this.resolveUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
-                    promise.catch( this.rejectUpdateModel( collectionName, model, updatedProperties ).bind( this ) );
+                    promise.then( this.resolveUpdateModel( collectionName, model, properties ).bind( this ) );
+                    promise.catch( this.rejectUpdateModel( collectionName, model, newModel ).bind( this ) );
                     return model;
                 },
                 resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
@@ -151,10 +150,11 @@
                         this.pruneRelationships( collectionName, updatedProperties );
                     }
                 },
-                rejectUpdateModel: function rejectUpdateModel( collectionName, model, oldProperties ) {
+                rejectUpdateModel: function rejectUpdateModel( collectionName, oldModel, newModel ) {
                     return function rejectPromise() {
-                        this._propertyIterator( oldProperties, function iterator( property ) {
-                            model[ property ] = oldProperties[ property ];
+                        this.silently( function silently() {
+                            this.collection( collectionName ).restoreModel( oldModel );
+                            this.deleteModel( collectionName, newModel );
                         } );
                     };
                 },

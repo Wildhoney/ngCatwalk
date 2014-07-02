@@ -426,9 +426,9 @@
 
                     var promise = this.createPromise(collectionName, 'update', [model]);
 
-//                    // Promise resolution.
+                    // Promise resolution.
                     promise.then(this.resolveUpdateModel(collectionName, model, properties).bind(this));
-//                    promise.catch(this.rejectUpdateModel(collectionName, model, updatedProperties).bind(this));
+                    promise.catch(this.rejectUpdateModel(collectionName, model, newModel).bind(this));
 
                     return model;
 
@@ -455,16 +455,20 @@
                 /**
                  * @method rejectUpdateModel
                  * @param collectionName {String}
-                 * @param model {Object}
-                 * @param oldProperties {Object}
+                 * @param oldModel {Object}
+                 * @param newModel {Object}
                  * @return {Function}
                  */
-                rejectUpdateModel: function rejectUpdateModel(collectionName, model, oldProperties) {
+                rejectUpdateModel: function rejectUpdateModel(collectionName, oldModel, newModel) {
 
                     return function rejectPromise() {
 
-                        this._propertyIterator(oldProperties, function iterator(property) {
-                            model[property] = oldProperties[property];
+                        this.silently(function silently() {
+
+                            // Silently create the new model, and delete the old model.
+                            this.collection(collectionName).restoreModel(oldModel);
+                            this.deleteModel(collectionName, newModel);
+
                         });
 
                     };
