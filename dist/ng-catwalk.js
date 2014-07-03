@@ -195,6 +195,10 @@
                 },
                 createPromise: function createPromise( collectionName, type, args ) {
                     var deferred = $q.defer();
+                    if ( this._silent ) {
+                        deferred.resolve();
+                        return deferred.promise;
+                    }
                     if ( !_.isArray( args ) ) {
                         args = args ? [ args ] : [];
                     }

@@ -12,7 +12,12 @@
         $scope.catName = 'Kipper';
 
         $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
-            console.log(model);
+            console.log('Delete');
+            deferred.resolve();
+        });
+
+        $scope.$on('catwalk/update/cat', function(event, deferred, model) {
+            console.log('Update');
             deferred.resolve();
         });
 

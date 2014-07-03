@@ -332,7 +332,6 @@
                     // Add the model to the collection and generate the promise.
                     this.collection(collectionName).addModel(model);
 
-
                     var simpleModel = this.simplifyModel(collectionName, model),
                         promise     = this.createPromise(collectionName, 'create', [simpleModel]);
 
@@ -576,6 +575,14 @@
                 createPromise: function createPromise(collectionName, type, args) {
 
                     var deferred = $q.defer();
+
+                    if (this._silent) {
+
+                        // Immediately resolve the promise if we're in silent mode.
+                        deferred.resolve();
+                        return deferred.promise;
+
+                    }
 
                     if (!_.isArray(args)) {
 
