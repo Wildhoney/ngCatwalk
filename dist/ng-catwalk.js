@@ -104,7 +104,8 @@
                 createModel: function createModel( collectionName, model ) {
                     model = this.cleanModel( collectionName, model );
                     this.collection( collectionName ).addModel( model );
-                    var promise = this.createPromise( collectionName, 'create', [ model ] );
+                    var simpleModel = this.simplifyModel( collectionName, model ),
+                        promise = this.createPromise( collectionName, 'create', [ simpleModel ] );
                     promise.then( this.resolveCreateModel( collectionName, model ).bind( this ) );
                     promise.catch( this.rejectCreateModel( collectionName, model ).bind( this ) );
                     return model;
@@ -140,10 +141,24 @@
                         this.createModel( collectionName, newModel );
                         this.deleteModel( collectionName, model );
                     } );
-                    var promise = this.createPromise( collectionName, 'update', [ model ] );
+                    var newSimpleModel = this.simplifyModel( collectionName, newModel ),
+                        promise = this.createPromise( collectionName, 'update', [ newSimpleModel ] );
                     promise.then( this.resolveUpdateModel( collectionName, model, properties ).bind( this ) );
                     promise.catch( this.rejectUpdateModel( collectionName, model, newModel ).bind( this ) );
                     return model;
+                },
+                simplifyModel: function simplifyModel( collectionName, model ) {
+                    var simpleModel = _.clone( model ),
+                        internalId = simpleModel[ this._primaryName ];
+                    delete simpleModel[ this._primaryName ];
+                    delete simpleModel.$$hashKey;
+                    this._propertyIterator( simpleModel, function iterator( property ) {
+                        if ( !this.getRelationshipType( collectionName, property ) ) {
+                            return;
+                        }
+                        simpleModel[ property ] = this._relationshipStore[ collectionName ][ internalId ][ property ];
+                    } );
+                    return simpleModel;
                 },
                 resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
                     return function resolvePromise() {
@@ -160,7 +175,8 @@
                 },
                 deleteModel: function deleteModel( collectionName, model ) {
                     this.collection( collectionName ).deleteModel( model );
-                    var promise = this.createPromise( collectionName, 'delete', [ model ] );
+                    var simpleModel = this.simplifyModel( collectionName, model ),
+                        promise = this.createPromise( collectionName, 'delete', [ simpleModel ] );
                     promise.then( this.resolveDeleteModel( collectionName, model ).bind( this ) );
                     promise.catch( this.rejectDeleteModel( collectionName, model ).bind( this ) );
                     return model;
