@@ -15,7 +15,10 @@
         },
         autoIncrement: function autoIncrement() {
             var index = 0;
-            return function () {
+            return function ( value ) {
+                if ( value !== null ) {
+                    return value;
+                }
                 return ++index;
             }
         },
@@ -60,18 +63,22 @@
     app.service( 'catwalk', [ '$rootScope', '$q', '$interpolate', 'Crossfilter',
         function CatwalkService( $rootScope, $q, $interpolate, Crossfilter ) {
             function Catwalk() {
-                this._collections = {};
-                this._relationships = {};
-                this._relationshipStore = {};
+                this.collections = {};
+                this.relationships = {};
+                this.relationshipStore = {};
+                this.deferStore = {};
             }
             Catwalk.prototype = {
-                _collections: {},
-                _primaryName: '_catwalkId',
-                _relationshipStore: {},
-                _relationships: {},
-                _silent: false,
-                _eventName: 'catwalk/{{type}}/{{collection}}',
-                _relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
+                mode: 'instant',
+                collections: {},
+                primaryName: '_catwalkId',
+                relationshipStore: {},
+                deferStore: {},
+                relationships: {},
+                silent: false,
+                eventName: 'catwalk/{{type}}/{{collection}}',
+                deferName: 'catwalk/defer/{{collection}}/{{property}}/{{value}}',
+                relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
                 attribute: ngCatwalkAttribute,
                 relationship: {
                     hasOne: function hasOne( options ) {
@@ -82,40 +89,35 @@
                     }
                 },
                 collection: function collection( name, properties ) {
-                    if ( !this._collections[ name ] ) {
-                        this._collections[ name ] = new Crossfilter( [], this._primaryName );
+                    if ( !this.collections[ name ] ) {
+                        this.collections[ name ] = new Crossfilter( [], this.primaryName );
                     }
                     if ( properties ) {
-                        properties[ this._primaryName ] = this.attribute.number();
-                        this._collections[ name ].blueprint = properties;
-                        this._collections[ name ].index = 0;
-                        this._collections[ name ].name = name;
+                        properties[ this.primaryName ] = this.attribute.number();
+                        this.collections[ name ].blueprint = properties;
+                        this.collections[ name ].index = 0;
+                        this.collections[ name ].name = name;
                         this._propertyIterator( properties, function iterator( property ) {
-                            this._collections[ name ].addDimension( property );
+                            this.collections[ name ].addDimension( property );
                         } );
                     }
-                    return this._collections[ name ];
+                    return this.collections[ name ];
+                },
+                setMode: function setMode( mode ) {
+                    this.mode = mode;
                 },
                 silently: function silently( processFunction ) {
-                    this._silent = true;
+                    this.silent = true;
                     processFunction.apply( this );
-                    this._silent = false;
+                    this.silent = false;
                 },
                 createModel: function createModel( collectionName, model ) {
                     model = this.cleanModel( collectionName, model );
-                    this.collection( collectionName ).addModel( model );
                     var simpleModel = this.simplifyModel( collectionName, model ),
                         promise = this.createPromise( collectionName, 'create', [ simpleModel ] );
                     promise.then( this.resolveCreateModel( collectionName, model ).bind( this ) );
                     promise.catch( this.rejectCreateModel( collectionName, model ).bind( this ) );
                     return model;
-                },
-                rejectCreateModel: function rejectCreateModel( collectionName, model ) {
-                    return function rejectPromise() {
-                        this.silently( function silentlyDelete() {
-                            this.collection( collectionName ).deleteModel( model );
-                        } );
-                    };
                 },
                 resolveCreateModel: function resolveCreateModel( collectionName, model ) {
                     return function resolvePromise( properties ) {
@@ -127,42 +129,45 @@
                             }
                             model[ property ] = typecast( properties[ property ] );
                         } );
+                        this.collection( collectionName ).addModel( model );
+                    };
+                },
+                rejectCreateModel: function rejectCreateModel( collectionName, model ) {
+                    return function rejectPromise() {
+                        this.silently( function silentlyDelete() {
+                            this.collection( collectionName ).deleteModel( model );
+                        } );
                     };
                 },
                 updateModel: function updateModel( collectionName, model, properties ) {
                     var newModel = _.extend( _.clone( model ), properties ),
-                        internalId = model[ this._primaryName ];
-                    this._propertyIterator( newModel, function iterator( property ) {
-                        if ( this.getRelationshipType( collectionName, property ) ) {
-                            newModel[ property ] = this._relationshipStore[ collectionName ][ internalId ][ property ];
-                        }
-                    } );
-                    this.silently( function silently() {
-                        this.createModel( collectionName, newModel );
-                        this.deleteModel( collectionName, model );
-                    } );
-                    var newSimpleModel = this.simplifyModel( collectionName, newModel ),
-                        promise = this.createPromise( collectionName, 'update', [ newSimpleModel ] );
-                    promise.then( this.resolveUpdateModel( collectionName, model, properties ).bind( this ) );
+                        newSimpleModel = this.simplifyModel( collectionName, newModel );
+                    console.log( JSON.stringify( newSimpleModel ) );
+                    var promise = this.createPromise( collectionName, 'update', [ newSimpleModel ] );
                     promise.catch( this.rejectUpdateModel( collectionName, model, newModel ).bind( this ) );
+                    promise.then( this.resolveUpdateModel( collectionName, newModel, model, properties ).bind( this ) );
                     return model;
                 },
-                simplifyModel: function simplifyModel( collectionName, model ) {
-                    var simpleModel = _.clone( model ),
-                        internalId = simpleModel[ this._primaryName ];
-                    delete simpleModel[ this._primaryName ];
-                    delete simpleModel.$$hashKey;
-                    this._propertyIterator( simpleModel, function iterator( property ) {
-                        if ( !this.getRelationshipType( collectionName, property ) ) {
-                            return;
-                        }
-                        simpleModel[ property ] = this._relationshipStore[ collectionName ][ internalId ][ property ];
-                    } );
-                    return simpleModel;
-                },
-                resolveUpdateModel: function resolveUpdateModel( collectionName, model, updatedProperties ) {
+                resolveUpdateModel: function resolveUpdateModel( collectionName, newModel, oldModel, updatedProperties ) {
                     return function resolvePromise() {
+                        var internalId = oldModel[ this.primaryName ];
+                        this._propertyIterator( newModel, function iterator( property ) {
+                            if ( this.relationshipType( collectionName, property ) ) {
+                                newModel[ property ] = this.relationshipStore[ collectionName ][ internalId ][ property ];
+                            }
+                        } );
+                        this.silently( function silently() {
+                            this.createModel( collectionName, newModel );
+                            this.deleteModel( collectionName, oldModel );
+                        } );
                         this.pruneRelationships( collectionName, updatedProperties );
+                    }
+                },
+                resolveReadModel: function resolveReadModel( collectionName ) {
+                    return function resolvePromise( model ) {
+                        this.silently( function silently() {
+                            this.createModel( collectionName, model );
+                        } )
                     }
                 },
                 rejectUpdateModel: function rejectUpdateModel( collectionName, oldModel, newModel ) {
@@ -174,7 +179,6 @@
                     };
                 },
                 deleteModel: function deleteModel( collectionName, model ) {
-                    this.collection( collectionName ).deleteModel( model );
                     var simpleModel = this.simplifyModel( collectionName, model ),
                         promise = this.createPromise( collectionName, 'delete', [ simpleModel ] );
                     promise.then( this.resolveDeleteModel( collectionName, model ).bind( this ) );
@@ -183,6 +187,7 @@
                 },
                 resolveDeleteModel: function resolveDeleteModel( collectionName, model ) {
                     return function resolvePromise() {
+                        this.collection( collectionName ).deleteModel( model );
                         this.pruneRelationships( collectionName, model );
                     };
                 },
@@ -193,9 +198,34 @@
                         } );
                     };
                 },
+                simplifyModel: function simplifyModel( collectionName, model ) {
+                    var simpleModel = _.clone( model ),
+                        internalId = simpleModel[ this.primaryName ];
+                    delete simpleModel[ this.primaryName ];
+                    delete simpleModel.$$hashKey;
+                    this._propertyIterator( simpleModel, function iterator( property ) {
+                        if ( !this.relationshipType( collectionName, property ) ) {
+                            return;
+                        }
+                        var attribute = simpleModel[ property ];
+                        simpleModel[ property ] = this.relationshipStore[ collectionName ][ internalId ][ property ];
+                        switch ( this.relationshipType( collectionName, property ) ) {
+                        case ( ngCatwalkRelationship.TYPES.MANY ):
+                            if ( attribute[ 0 ] ) {
+                                _.forEach( attribute, function forEach( currentModel, index ) {
+                                    if ( currentModel[ this.primaryName ] === model[ this.primaryName ] ) {
+                                        simpleModel[ property ].splice( index, 1 );
+                                    }
+                                }.bind( this ) );
+                            }
+                            break;
+                        }
+                    } );
+                    return simpleModel;
+                },
                 createPromise: function createPromise( collectionName, type, args ) {
                     var deferred = $q.defer();
-                    if ( this._silent ) {
+                    if ( this.silent ) {
                         deferred.resolve();
                         return deferred.promise;
                     }
@@ -203,7 +233,7 @@
                         args = args ? [ args ] : [];
                     }
                     args.unshift( deferred );
-                    var eventName = $interpolate( this._eventName )( {
+                    var eventName = $interpolate( this.eventName )( {
                         type: type,
                         collection: collectionName
                     } );
@@ -215,8 +245,8 @@
                         blueprint = localCollection.blueprint[ property ],
                         options = blueprint.getOptions(),
                         foreignCollection = this.collection( options.collection ),
-                        store = this._relationshipStore,
-                        internalId = model[ this._primaryName ];
+                        store = this.relationshipStore,
+                        internalId = model[ this.primaryName ];
                     ( function storeRelationshipData() {
                         var record = {
                             localCollection: collectionName,
@@ -224,8 +254,8 @@
                             foreignCollection: options.collection,
                             foreignProperty: options.foreignKey
                         };
-                        var key = $interpolate( this._relationshipName )( record );
-                        this._relationships[ key ] = record;
+                        var key = $interpolate( this.relationshipName )( record );
+                        this.relationships[ key ] = record;
                     }.bind( this ) )();
                     ( function recursivelyCreateRelationshipStore() {
                         if ( !$angular.isDefined( store[ collectionName ] ) ) {
@@ -236,7 +266,7 @@
                         }
                     } )();
                     var method = 'throwRelationshipException';
-                    switch ( this.getRelationshipType( collectionName, property ) ) {
+                    switch ( this.relationshipType( collectionName, property ) ) {
                     case ( ngCatwalkRelationship.TYPES.ONE ):
                         method = 'createHasOneRelationship';
                         break;
@@ -247,14 +277,14 @@
                     this[ method ]( collectionName, model, property, foreignCollection, options.foreignKey );
                 },
                 pruneRelationships: function pruneRelationships( modifiedCollectionName, model ) {
-                    this._propertyIterator( this._relationships, function iterator( property ) {
-                        var relationshipData = this._relationships[ property ];
+                    this._propertyIterator( this.relationships, function iterator( property ) {
+                        var relationshipData = this.relationships[ property ];
                         if ( relationshipData.foreignCollection !== modifiedCollectionName ) {
                             return;
                         }
                         var valueToDelete = model[ relationshipData.foreignProperty ],
                             models = this.collection( relationshipData.localCollection ).collection(),
-                            relationshipType = this.getRelationshipType( relationshipData.localCollection, relationshipData.localProperty );
+                            relationshipType = this.relationshipType( relationshipData.localCollection, relationshipData.localProperty );
                         for ( var index = 0; index < models.length; index++ ) {
                             switch ( relationshipType ) {
                             case ( ngCatwalkRelationship.TYPES.ONE ):
@@ -271,8 +301,8 @@
                     throwException( "Congratulations! You managed to create an invalid relationship" );
                 },
                 createHasOneRelationship: function createHasOneRelationship( collectionName, model, property, foreignCollection, foreignKey ) {
-                    var internalId = model[ this._primaryName ],
-                        store = this._relationshipStore,
+                    var internalId = model[ this.primaryName ],
+                        store = this.relationshipStore,
                         createPromise = this.createPromise.bind( this );
                     store[ collectionName ][ internalId ][ property ] = model[ property ] || '';
                     $object.defineProperty( model, property, {
@@ -281,19 +311,30 @@
                             foreignCollection.filterBy( foreignKey, entry );
                             var foreignModel = foreignCollection.collection()[ 0 ];
                             if ( entry.length && foreignCollection.length === 0 ) {
-                                createPromise( foreignCollection.name, 'read', [ foreignKey, entry ] );
+                                var name = $interpolate( this.deferName )( {
+                                    collection: foreignCollection.name,
+                                    property: foreignKey,
+                                    value: entry
+                                } );
+                                if ( !this.deferStore[ name ] ) {
+                                    this.deferStore[ name ] = true;
+                                    var promise = createPromise( foreignCollection.name, 'read', [ foreignKey, entry ] );
+                                    if ( !this.silent ) {
+                                        promise.then( this.resolveReadModel( foreignCollection.name ).bind( this ) );
+                                    }
+                                }
                             }
                             foreignCollection.unfilterBy( foreignKey );
                             return foreignModel || {};
-                        },
+                        }.bind( this ),
                         set: function set( value ) {
                             store[ collectionName ][ internalId ][ property ] = value;
                         }
                     } );
                 },
                 createHasManyRelationship: function createHasManyRelationship( collectionName, model, property, foreignCollection, foreignKey ) {
-                    var internalId = model[ this._primaryName ],
-                        store = this._relationshipStore,
+                    var internalId = model[ this.primaryName ],
+                        store = this.relationshipStore,
                         createPromise = this.createPromise.bind( this );
                     store[ collectionName ][ internalId ][ property ] = model[ property ] || [];
                     var entry = store[ collectionName ][ internalId ][ property ];
@@ -305,11 +346,27 @@
                             foreignCollection.filterBy( foreignKey, entry, inArray );
                             var foreignModels = foreignCollection.collection();
                             if ( entry.length && foreignModels.length !== entry.length ) {
-                                var values = _.pluck( foreignModels, foreignKey ),
+                                var difference = entry,
+                                    values = [ 'ok' ];
+                                if ( foreignModels && foreignModels.length ) {
+                                    values = _.pluck( foreignModels, foreignKey );
                                     difference = _.difference( entry, values );
+                                }
                                 if ( values.length !== 0 ) {
                                     for ( var index = 0; index < difference.length; index++ ) {
-                                        createPromise( foreignCollection.name, 'read', [ foreignKey, difference[ index ] ] );
+                                        var name = $interpolate( this.deferName )( {
+                                            collection: foreignCollection.name,
+                                            property: foreignKey,
+                                            value: difference[ index ]
+                                        } );
+                                        if ( this.deferStore[ name ] ) {
+                                            continue;
+                                        }
+                                        this.deferStore[ name ] = true;
+                                        var promise = createPromise( foreignCollection.name, 'read', [ foreignKey, difference[ index ] ] );
+                                        if ( !this.silent ) {
+                                            promise.then( this.resolveReadModel( foreignCollection.name ).bind( this ) );
+                                        }
                                     }
                                 }
                             }
@@ -332,7 +389,7 @@
                                 return entry.indexOf( value ) !== -1;
                             };
                             return foreignModels || [];
-                        },
+                        }.bind( this ),
                         set: function set( value ) {
                             if ( entry.indexOf( value ) === -1 ) {
                                 entry.push( value );
@@ -341,10 +398,10 @@
                     } );
                 },
                 cleanModel: function cleanModel( collectionName, model ) {
-                    var primaryKey = this._primaryName,
+                    var primaryKey = this.primaryName,
                         blueprint = this.collection( collectionName ).blueprint,
                         iterator = this._propertyIterator,
-                        getRelationshipType = this.getRelationshipType.bind( this ),
+                        relationshipType = this.relationshipType.bind( this ),
                         createRelationship = this.createRelationship.bind( this );
                     model[ primaryKey ] = ++this.collection( collectionName ).index;
                     ( function removeProperties() {
@@ -359,7 +416,7 @@
                             if ( !$angular.isDefined( model[ property ] ) && property !== primaryKey ) {
                                 model[ property ] = null;
                             }
-                            if ( !getRelationshipType( collectionName, property ) ) {
+                            if ( !relationshipType( collectionName, property ) ) {
                                 var typecast = blueprint[ property ];
                                 model[ property ] = typecast( model[ property ] );
                                 return;
@@ -369,7 +426,7 @@
                     } )();
                     return model;
                 },
-                getRelationshipType: function getRelationshipType( collectionName, property ) {
+                relationshipType: function relationshipType( collectionName, property ) {
                     var propertyBlueprint = this.collection( collectionName ).blueprint[ property ],
                         relationships = {};
                     relationships[ ngCatwalkRelationship.TYPES.ONE ] = ngCatwalkRelationship.One;
