@@ -11,13 +11,21 @@
          */
         $scope.catName = 'Kipper';
 
+        $scope.$on('catwalk/read/cat', function(event, deferred, a, b) {
+            console.log(a);
+            console.log(b);
+            deferred.resolve();
+        });
+
+        $scope.$on('catwalk/create/cat', function(event, deferred, model) {
+            deferred.resolve();
+        });
+
         $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
-            console.log('Delete');
             deferred.resolve();
         });
 
         $scope.$on('catwalk/update/cat', function(event, deferred, model) {
-            console.log('Update');
             deferred.resolve();
         });
 
@@ -57,8 +65,9 @@
          */
         $scope.createCat = function createCat(name) {
 
-            catwalk.createModel('cat', {
-                name: name
+            var model = catwalk.createModel('cat', {
+                name: name,
+                friends: ['Splodge']
             });
 
             $scope.catName = 'Mango';

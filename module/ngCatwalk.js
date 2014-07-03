@@ -826,9 +826,17 @@
 
                             if (entry.length && foreignModels.length !== entry.length) {
 
-                                // Determine which models need to be loaded.
-                                var values     = _.pluck(foreignModels, foreignKey),
+                                // By default we'll assume nothing has been loaded.
+                                var difference = entry,
+                                    values     = ['ok'];
+
+                                if (foreignModels && foreignModels.length) {
+
+                                    // Determine which models need to be loaded.
+                                    values     = _.pluck(foreignModels, foreignKey);
                                     difference = _.difference(entry, values);
+
+                                }
 
                                 if (values.length !== 0) {
 
