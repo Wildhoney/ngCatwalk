@@ -17,7 +17,7 @@
                 deferred.resolve({
                     colour: value
                 });
-            }, 200);
+            }, 1);
 
         });
 
@@ -25,7 +25,7 @@
 
             $timeout(function() {
                 deferred.resolve();
-            }, 200);
+            }, 1);
 
         });
 
@@ -33,7 +33,7 @@
 
             $timeout(function() {
                 deferred.resolve();
-            }, 200);
+            }, 1);
 
         });
 
@@ -41,15 +41,17 @@
 
             $timeout(function() {
                 deferred.resolve();
-            }, 200);
+            }, 1);
 
         });
 
         $scope.$on('catwalk/update/cat', function(event, deferred, model) {
 
+            console.log(JSON.stringify(model));
+
             $timeout(function() {
                 deferred.resolve();
-            }, 500);
+            }, 1);
 
         });
 

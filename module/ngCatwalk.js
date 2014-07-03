@@ -201,9 +201,9 @@
                 /**
                  * @property mode
                  * @type {String}
-                 * @default "immediate"
+                 * @default "instant"
                  */
-                mode: 'immediate',
+                mode: 'instant',
 
                 /**
                  * @property collections
@@ -375,24 +375,6 @@
                 },
 
                 /**
-                 * @method rejectCreateModel
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @return {Function}
-                 */
-                rejectCreateModel: function rejectCreateModel(collectionName, model) {
-
-                    return function rejectPromise() {
-
-                        this.silently(function silentlyDelete() {
-                            this.collection(collectionName).deleteModel(model);
-                        });
-
-                    };
-
-                },
-
-                /**
                  * @method resolveCreateModel
                  * @param collectionName {String}
                  * @param model {Object}
@@ -428,6 +410,24 @@
                 },
 
                 /**
+                 * @method rejectCreateModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Function}
+                 */
+                rejectCreateModel: function rejectCreateModel(collectionName, model) {
+
+                    return function rejectPromise() {
+
+                        this.silently(function silentlyDelete() {
+                            this.collection(collectionName).deleteModel(model);
+                        });
+
+                    };
+
+                },
+
+                /**
                  * @method updateModel
                  * @param collectionName {String}
                  * @param model {Object}
@@ -438,12 +438,25 @@
 
                     // Create a representation of the new model.
                     var newModel       = _.extend(_.clone(model), properties),
-                        newSimpleModel = this.simplifyModel(collectionName, newModel),
-                        promise        = this.createPromise(collectionName, 'update', [newSimpleModel]);
+                        newSimpleModel = this.simplifyModel(collectionName, newModel);
+
+                    console.log(JSON.stringify(newSimpleModel));
+
+                    var    promise        = this.createPromise(collectionName, 'update', [newSimpleModel]);
+
+//                    if (this.mode === 'instant') {
+//
+//                        this.resolveUpdateModel(collectionName, newModel, model, properties).bind(this)();
+//
+//                    } else {
+//
+//                        promise.then(this.resolveUpdateModel(collectionName, newModel, model, properties).bind(this));
+//
+//                    }
 
                     // Promise resolution.
-                    promise.then(this.resolveUpdateModel(collectionName, newModel, model, properties).bind(this));
                     promise.catch(this.rejectUpdateModel(collectionName, model, newModel).bind(this));
+                    promise.then(this.resolveUpdateModel(collectionName, newModel, model, properties).bind(this));
 
                     return model;
 
@@ -466,7 +479,7 @@
                         // Setup the relationships.
                         this._propertyIterator(newModel, function iterator(property) {
 
-                            if (this.getRelationshipType(collectionName, property)) {
+                            if (this.relationshipType(collectionName, property)) {
 
                                 // Update the new model with the previous relational data.
                                 newModel[property] = this.relationshipStore[collectionName][internalId][property];
@@ -605,11 +618,36 @@
                     this._propertyIterator(simpleModel, function iterator(property) {
 
                         // We're only interested in the relationships.
-                        if (!this.getRelationshipType(collectionName, property)) {
+                        if (!this.relationshipType(collectionName, property)) {
                             return;
                         }
 
+                        var attribute         = simpleModel[property];
                         simpleModel[property] = this.relationshipStore[collectionName][internalId][property];
+
+                        // Remove the relationship if we're removing a model that self-joins itself, and we're
+                        // modifying the attribute in which the relationship is formed on.
+
+                        switch (this.relationshipType(collectionName, property)) {
+
+//                                case (ngCatwalkRelationship.TYPES.ONE):  method = 'createHasOneRelationship'; break;
+                            case (ngCatwalkRelationship.TYPES.MANY):
+
+                                if (attribute[0]) {
+
+                                    _.forEach(attribute, function forEach(currentModel, index) {
+
+                                        if (currentModel[this.primaryName] === model[this.primaryName]) {
+                                            simpleModel[property].splice(index, 1);
+                                        }
+
+                                    }.bind(this));
+
+                                }
+
+                                break;
+
+                        }
 
                     });
 
@@ -709,7 +747,7 @@
                     // Determine the type of the relationship, with the default being throwing an
                     // exception to congratulate the developer on somehow managing to create an
                     // invalid relationship.
-                    switch (this.getRelationshipType(collectionName, property)) {
+                    switch (this.relationshipType(collectionName, property)) {
 
                         case (ngCatwalkRelationship.TYPES.ONE):  method = 'createHasOneRelationship'; break;
                         case (ngCatwalkRelationship.TYPES.MANY): method = 'createHasManyRelationship'; break;
@@ -745,7 +783,7 @@
                         // relevant relationships.
                         var valueToDelete    = model[relationshipData.foreignProperty],
                             models           = this.collection(relationshipData.localCollection).collection(),
-                            relationshipType = this.getRelationshipType(relationshipData.localCollection, relationshipData.localProperty);
+                            relationshipType = this.relationshipType(relationshipData.localCollection, relationshipData.localProperty);
 
                         // Iterate over each model to remove the `valueToDelete` from the relationship.
                         for (var index = 0; index < models.length; index++) {
@@ -1024,7 +1062,7 @@
                     var primaryKey          = this.primaryName,
                         blueprint           = this.collection(collectionName).blueprint,
                         iterator            = this._propertyIterator,
-                        getRelationshipType = this.getRelationshipType.bind(this),
+                        relationshipType = this.relationshipType.bind(this),
                         createRelationship  = this.createRelationship.bind(this);
 
                     // Add the primary key to the model.
@@ -1065,7 +1103,7 @@
 
                             }
 
-                            if (!getRelationshipType(collectionName, property)) {
+                            if (!relationshipType(collectionName, property)) {
 
                                 var typecast = blueprint[property];
 
@@ -1087,12 +1125,12 @@
                 },
 
                 /**
-                 * @method getRelationshipType
+                 * @method relationshipType
                  * @param collectionName {String}
                  * @param property {String}
                  * @return {String|null}
                  */
-                getRelationshipType: function getRelationshipType(collectionName, property) {
+                relationshipType: function relationshipType(collectionName, property) {
 
                     var propertyBlueprint = this.collection(collectionName).blueprint[property],
                         relationships     = {};
