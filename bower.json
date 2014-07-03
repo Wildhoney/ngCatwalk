@@ -30,6 +30,6 @@
   "dependencies": {
     "bootstrap": "~3.1.1",
     "underscore": "~1.6.0",
-    "ng-crossfilter": "~2.2.14"
+    "ng-crossfilter": "~2.2.15"
   }
 }
