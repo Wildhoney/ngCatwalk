@@ -182,6 +182,7 @@
                 this._collections       = {};
                 this._relationships     = {};
                 this._relationshipStore = {};
+                this._deferStore        = {};
 
             }
 
@@ -211,6 +212,12 @@
                 _relationshipStore: {},
 
                 /**
+                 * @property _this._deferStore
+                 * @type {Object}
+                 */
+                _deferStore: {},
+
+                /**
                  * @property _relationships
                  * @type {Object}
                  */
@@ -227,6 +234,12 @@
                  * @type {String}
                  */
                 _eventName: 'catwalk/{{type}}/{{collection}}',
+
+                /**
+                 * @property _deferName
+                 * @type {String}
+                 */
+                _deferName: 'catwalk/defer/{{collection}}/{{property}}/{{value}}',
 
                 /**
                  * @property _relationshipName
@@ -481,6 +494,19 @@
                         // Update relationships to remove any ghost references.
                         this.pruneRelationships(collectionName, updatedProperties);
 
+                    }
+
+                },
+
+                /**
+                 * @method resolveReadModel
+                 * @param collectionName {String}
+                 * @return {Function}
+                 */
+                resolveReadModel: function resolveReadModel(collectionName) {
+
+                    return function resolvePromise(model) {
+                        this.createModel(collectionName, model);
                     }
 
                 },
@@ -843,7 +869,27 @@
                                     // Iterate over each required model to attempt to load them via
                                     // our promise.
                                     for (var index = 0; index < difference.length; index++) {
-                                        createPromise(foreignCollection.name, 'read', [foreignKey, difference[index]]);
+
+                                        var name = $interpolate(this._deferName)({
+                                            collection: foreignCollection.name,
+                                            property:   foreignKey,
+                                            value:      difference[index]
+                                        });
+
+                                        if (this._deferStore[name]) {
+
+                                            // We've already issue a promise for this model.
+                                            continue;
+
+                                        }
+
+                                        this._deferStore[name] = true;
+                                        var promise = createPromise(foreignCollection.name, 'read', [foreignKey, difference[index]]);
+
+                                        promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
+//                                        promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
+
+
                                     }
 
                                 }
@@ -899,7 +945,7 @@
 
                             return foreignModels || [];
 
-                        },
+                        }.bind(this),
 
                         /**
                          * @method set

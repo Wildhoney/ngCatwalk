@@ -11,10 +11,17 @@
          */
         $scope.catName = 'Kipper';
 
-        $scope.$on('catwalk/read/cat', function(event, deferred, a, b) {
-            console.log(a);
-            console.log(b);
-            deferred.resolve();
+        $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
+
+            console.log(value);
+
+            $timeout(function() {
+
+                deferred.resolve({ name: value });
+
+//                catwalk.createModel('cat', { name: value });
+            }, 1000);
+
         });
 
         $scope.$on('catwalk/create/cat', function(event, deferred, model) {
