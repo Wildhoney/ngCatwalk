@@ -348,9 +348,6 @@
                     // Ensure the model conforms with the collection blueprint.
                     model = this.cleanModel(collectionName, model);
 
-                    // Add the model to the collection and generate the promise.
-                    this.collection(collectionName).addModel(model);
-
                     var simpleModel = this.simplifyModel(collectionName, model),
                         promise     = this.createPromise(collectionName, 'create', [simpleModel]);
 
@@ -407,6 +404,9 @@
                             model[property] = typecast(properties[property]);
 
                         });
+
+                        // Add the model to the collection and generate the promise.
+                        this.collection(collectionName).addModel(model);
 
                     };
 
@@ -512,7 +512,11 @@
                 resolveReadModel: function resolveReadModel(collectionName) {
 
                     return function resolvePromise(model) {
-                        this.createModel(collectionName, model);
+
+                        this.silently(function silently() {
+                            this.createModel(collectionName, model);
+                        })
+
                     }
 
                 },

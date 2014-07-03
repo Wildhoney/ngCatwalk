@@ -17,8 +17,11 @@
                 colour: value
             });
 
-            console.log(value);
+        });
 
+        $scope.$on('catwalk/create/colour', function(event, deferred, model) {
+            console.log('Here');
+            deferred.resolve();
         });
 
         $scope.$on('catwalk/create/cat', function(event, deferred, model) {
