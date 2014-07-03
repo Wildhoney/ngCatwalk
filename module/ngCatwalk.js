@@ -331,7 +331,10 @@
 
                     // Add the model to the collection and generate the promise.
                     this.collection(collectionName).addModel(model);
-                    var promise = this.createPromise(collectionName, 'create', [model]);
+
+
+                    var simpleModel = this.simplifyModel(collectionName, model),
+                        promise     = this.createPromise(collectionName, 'create', [simpleModel]);
 
                     // Promise resolution.
                     promise.then(this.resolveCreateModel(collectionName, model).bind(this));
@@ -424,13 +427,44 @@
 
                     });
 
-                    var promise = this.createPromise(collectionName, 'update', [model]);
+                    var newSimpleModel = this.simplifyModel(collectionName, newModel),
+                        promise        = this.createPromise(collectionName, 'update', [newSimpleModel]);
 
                     // Promise resolution.
                     promise.then(this.resolveUpdateModel(collectionName, model, properties).bind(this));
                     promise.catch(this.rejectUpdateModel(collectionName, model, newModel).bind(this));
 
                     return model;
+
+                },
+
+                /**
+                 * @method simplifyModel
+                 * @param collectionName {String}
+                 * @param model {Object}
+                 * @return {Object}
+                 */
+                simplifyModel: function simplifyModel(collectionName, model) {
+
+                    var simpleModel = _.clone(model),
+                        internalId  = simpleModel[this._primaryName];
+
+                    delete simpleModel[this._primaryName];
+                    delete simpleModel.$$hashKey;
+
+                    // Reverse all of the relationships to be simple.
+                    this._propertyIterator(simpleModel, function iterator(property) {
+
+                        // We're only interested in the relationships.
+                        if (!this.getRelationshipType(collectionName, property)) {
+                            return;
+                        }
+
+                        simpleModel[property] = this._relationshipStore[collectionName][internalId][property];
+
+                    });
+
+                    return simpleModel;
 
                 },
 
@@ -486,7 +520,8 @@
                     // Delete the model from the collection and generate the promise.
                     this.collection(collectionName).deleteModel(model);
 
-                    var promise = this.createPromise(collectionName, 'delete', [model]);
+                    var simpleModel = this.simplifyModel(collectionName, model),
+                        promise     = this.createPromise(collectionName, 'delete', [simpleModel]);
 
                     // Promise resolution.
                     promise.then(this.resolveDeleteModel(collectionName, model).bind(this));
