@@ -13,14 +13,12 @@
 
         $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
 
-            console.log(value);
-
-            $timeout(function() {
-
-                deferred.resolve({ name: value });
-
-//                catwalk.createModel('cat', { name: value });
-            }, 1000);
+            console.log('HEre');
+//            $timeout(function() {
+//
+//                deferred.resolve({ name: value });
+//
+//            }, 100);
 
         });
 
@@ -33,6 +31,7 @@
         });
 
         $scope.$on('catwalk/update/cat', function(event, deferred, model) {
+            console.log(model);
             deferred.resolve();
         });
 
@@ -73,8 +72,7 @@
         $scope.createCat = function createCat(name) {
 
             var model = catwalk.createModel('cat', {
-                name: name,
-                friends: ['Splodge']
+                name: name
             });
 
             $scope.catName = 'Mango';

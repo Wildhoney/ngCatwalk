@@ -47,8 +47,14 @@
 
             var index = 0;
 
-            return function() {
+            return function(value) {
+
+                if (value !== null) {
+                    return value;
+                }
+
                 return ++index;
+
             }
 
         },
@@ -886,9 +892,12 @@
                                         this._deferStore[name] = true;
                                         var promise = createPromise(foreignCollection.name, 'read', [foreignKey, difference[index]]);
 
-                                        promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
+                                        if (!this._silent) {
+
+                                            promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
 //                                        promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
 
+                                        }
 
                                     }
 
