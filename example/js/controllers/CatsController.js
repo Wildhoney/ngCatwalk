@@ -13,28 +13,44 @@
 
         $scope.$on('catwalk/read/colour', function(event, deferred, property, value) {
 
-            deferred.resolve({
-                colour: value
-            });
+            $timeout(function() {
+                deferred.resolve({
+                    colour: value
+                });
+            }, 200);
 
         });
 
         $scope.$on('catwalk/create/colour', function(event, deferred, model) {
-            console.log('Here');
-            deferred.resolve();
+
+            $timeout(function() {
+                deferred.resolve();
+            }, 200);
+
         });
 
         $scope.$on('catwalk/create/cat', function(event, deferred, model) {
-            deferred.resolve();
+
+            $timeout(function() {
+                deferred.resolve();
+            }, 200);
+
         });
 
         $scope.$on('catwalk/delete/cat', function(event, deferred, model) {
-            deferred.resolve();
+
+            $timeout(function() {
+                deferred.resolve();
+            }, 200);
+
         });
 
         $scope.$on('catwalk/update/cat', function(event, deferred, model) {
-            console.log(model);
-            deferred.resolve();
+
+            $timeout(function() {
+                deferred.resolve();
+            }, 500);
+
         });
 
         /**
