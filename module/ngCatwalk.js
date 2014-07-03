@@ -790,9 +790,28 @@
 
                             if (entry.length && foreignCollection.length === 0) {
 
-                                // Relationship exists, but we don't have the corresponding model yet, and
-                                // therefore we'll need to request it.
-                                createPromise(foreignCollection.name, 'read', [foreignKey, entry]);
+                                var name = $interpolate(this._deferName)({
+                                    collection: foreignCollection.name,
+                                    property:   foreignKey,
+                                    value:      entry
+                                });
+
+                                if (!this._deferStore[name]) {
+
+                                    this._deferStore[name] = true;
+
+                                    // Relationship exists, but we don't have the corresponding model yet, and
+                                    // therefore we'll need to request it.
+                                    var promise = createPromise(foreignCollection.name, 'read', [foreignKey, entry]);
+
+                                    if (!this._silent) {
+
+                                        promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
+//                                        promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
+
+                                    }
+
+                                }
 
                             }
 
@@ -800,7 +819,7 @@
 
                             return foreignModel || {};
 
-                        },
+                        }.bind(this),
 
                         /**
                          * @method set

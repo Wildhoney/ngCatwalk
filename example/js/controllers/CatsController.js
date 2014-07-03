@@ -11,14 +11,13 @@
          */
         $scope.catName = 'Kipper';
 
-        $scope.$on('catwalk/read/cat', function(event, deferred, property, value) {
+        $scope.$on('catwalk/read/colour', function(event, deferred, property, value) {
 
-            console.log('HEre');
-//            $timeout(function() {
-//
-//                deferred.resolve({ name: value });
-//
-//            }, 100);
+            deferred.resolve({
+                colour: value
+            });
+
+            console.log(value);
 
         });
 
@@ -60,8 +59,43 @@
             friends: catwalk.relationship.hasMany({
                 collection: 'cat',
                 foreignKey: 'name'
+            }),
+
+            /**
+             * @property colour
+             * @type {Object}
+             */
+            colour: catwalk.relationship.hasOne({
+                collection: 'colour',
+                foreignKey: 'colour'
             })
 
+        });
+
+        /**
+         * @property colours
+         * @type {Array}
+         */
+        $scope.colours = catwalk.collection('colour', {
+
+            /**
+             * @property colour
+             * @type {String}
+             */
+            colour: catwalk.attribute.string()
+
+        });
+
+        catwalk.createModel('colour', {
+            colour: 'Ginger'
+        });
+
+//        catwalk.createModel('colour', {
+//            colour: 'Black'
+//        });
+
+        catwalk.createModel('colour', {
+            colour: 'White'
         });
 
         /**
@@ -71,8 +105,9 @@
          */
         $scope.createCat = function createCat(name) {
 
-            var model = catwalk.createModel('cat', {
-                name: name
+            catwalk.createModel('cat', {
+                name: name,
+                colour: 'Black'
             });
 
             $scope.catName = 'Mango';
