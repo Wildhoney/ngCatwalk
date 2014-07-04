@@ -185,10 +185,7 @@
             function Catwalk() {
 
                 // Reset all of our properties.
-                this.collections       = {};
-                this.relationships     = {};
-                this.relationshipStore = {};
-                this.deferStore        = {};
+                this.collections = {};
 
             }
 

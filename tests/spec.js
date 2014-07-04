@@ -159,44 +159,35 @@ describe('ngCatwalk', function() {
 
         describe('Delete', function() {
 
-            /**
-             * @method $createListener
-             * @param $rootScope {Object}
-             * @param catwalk {Object}
-             * @return {void}
-             */
-            var $createListener = function($rootScope, catwalk) {
-
-                $rootScope.$on('catwalk/create/team', function(event, deferred) {
-
-                    nextTick(function() {
-
-                        deferred.resolve();
-                        $rootScope.$digest();
-                        expect(catwalk.collection('team').collection().length).toEqual(1);
-                        catwalk.deleteModel('team', $model);
-
-                    });
-
-                });
-
-            };
-
             it('Resolve: Should be able to delete models;', function(done) {
 
                 inject(function($rootScope, catwalk) {
 
                     $rootScope.$apply(function() {
 
-                        $createListener($rootScope, catwalk);
+                        $rootScope.$on('catwalk/create/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                deferred.resolve();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
+                                catwalk.deleteModel('team', $model);
+
+                            });
+
+                        });
 
                         $rootScope.$on('catwalk/delete/team', function(event, deferred) {
 
                             nextTick(function() {
+
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
                                 deferred.resolve();
                                 $rootScope.$digest();
                                 expect(catwalk.collection('team').collection().length).toEqual(0);
                                 done();
+
                             });
 
                         });
@@ -216,15 +207,29 @@ describe('ngCatwalk', function() {
 
                     $rootScope.$apply(function() {
 
-                        $createListener($rootScope, catwalk);
+                        $rootScope.$on('catwalk/create/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                deferred.resolve();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
+                                catwalk.deleteModel('team', $model);
+
+                            });
+
+                        });
 
                         $rootScope.$on('catwalk/delete/team', function(event, deferred) {
 
                             nextTick(function() {
+
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
                                 deferred.reject();
                                 $rootScope.$digest();
                                 expect(catwalk.collection('team').collection().length).toEqual(1);
                                 done();
+
                             });
 
                         });
