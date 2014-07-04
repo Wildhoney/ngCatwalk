@@ -245,6 +245,114 @@ describe('ngCatwalk', function() {
 
         });
 
+        describe('Update', function() {
+
+            it('Resolve: Should be able to update models;', function(done) {
+
+                inject(function($rootScope, catwalk) {
+
+                    $rootScope.$apply(function() {
+
+                        $rootScope.$on('catwalk/create/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                deferred.resolve();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
+
+                                catwalk.updateModel('team', $model, {
+                                    name: 'Argentina',
+                                    colour: 'Blue'
+                                });
+
+                            });
+
+                        });
+
+                        $rootScope.$on('catwalk/update/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                var model = catwalk.collection('team').collection()[0];
+                                expect(model.name).toEqual('Netherlands');
+                                expect(model.colour).toEqual('None');
+
+                                deferred.resolve();
+                                $rootScope.$digest();
+
+                                model = catwalk.collection('team').collection()[0];
+                                expect(model.name).toEqual('Argentina');
+                                expect(model.colour).toEqual('Blue');
+                                done();
+
+                            });
+
+                        });
+
+                        $createModel();
+                        expect(catwalk.collection('team').collection().length).toEqual(0);
+
+                    });
+
+                });
+
+            });
+
+            it('Reject: Should be able to update models;', function(done) {
+
+                inject(function($rootScope, catwalk) {
+
+                    $rootScope.$apply(function() {
+
+                        $rootScope.$on('catwalk/create/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                deferred.resolve();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
+
+                                catwalk.updateModel('team', $model, {
+                                    name: 'Argentina',
+                                    colour: 'Blue'
+                                });
+
+                            });
+
+                        });
+
+                        $rootScope.$on('catwalk/update/team', function(event, deferred) {
+
+                            nextTick(function() {
+
+                                var model = catwalk.collection('team').collection()[0];
+                                expect(model.name).toEqual('Netherlands');
+                                expect(model.colour).toEqual('None');
+
+                                deferred.reject();
+                                $rootScope.$digest();
+
+                                model = catwalk.collection('team').collection()[0];
+                                expect(model.name).toEqual('Netherlands');
+                                expect(model.colour).toEqual('None');
+                                done();
+
+                            });
+
+                        });
+
+                        $createModel();
+                        expect(catwalk.collection('team').collection().length).toEqual(0);
+
+                    });
+
+                });
+
+            });
+
+        });
+
     });
 
 });

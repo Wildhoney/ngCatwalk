@@ -433,10 +433,9 @@
                  * @param collectionName {String}
                  * @param newModel {Object}
                  * @param oldModel {Object}
-                 * @param updatedProperties {Object}
                  * @return {Function}
                  */
-                resolveUpdateModel: function resolveUpdateModel(collectionName, newModel, oldModel, updatedProperties) {
+                resolveUpdateModel: function resolveUpdateModel(collectionName, newModel, oldModel) {
 
                     return function resolvePromise() {
 
@@ -447,26 +446,6 @@
                             this.deleteModel(collectionName, oldModel);
 
                         });
-
-                        // Update relationships to remove any ghost references.
-                        this.pruneRelationships(collectionName, updatedProperties);
-
-                    }
-
-                },
-
-                /**
-                 * @method resolveReadModel
-                 * @param collectionName {String}
-                 * @return {Function}
-                 */
-                resolveReadModel: function resolveReadModel(collectionName) {
-
-                    return function resolvePromise(model) {
-
-                        this.silently(function silently() {
-                            this.createModel(collectionName, model);
-                        })
 
                     }
 
@@ -486,12 +465,29 @@
                         this.silently(function silently() {
 
                             // Silently create the new model, and delete the old model.
-                            this.collection(collectionName).restoreModel(oldModel);
-                            this.deleteModel(collectionName, newModel);
+//                            this.collection(collectionName).restoreModel(oldModel);
+//                            this.deleteModel(collectionName, newModel);
 
                         });
 
                     };
+
+                },
+
+                /**
+                 * @method resolveReadModel
+                 * @param collectionName {String}
+                 * @return {Function}
+                 */
+                resolveReadModel: function resolveReadModel(collectionName) {
+
+                    return function resolvePromise(model) {
+
+                        this.silently(function silently() {
+                            this.createModel(collectionName, model);
+                        })
+
+                    }
 
                 },
 
