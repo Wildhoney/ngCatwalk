@@ -1,4 +1,4 @@
-(function ngCatwalk($angular, _, $object) {
+(function ngCatwalk($angular, _) {
 
     "use strict";
 
@@ -218,24 +218,6 @@
                 primaryName: '_catwalkId',
 
                 /**
-                 * @property relationshipStore
-                 * @type {Object}
-                 */
-                relationshipStore: {},
-
-                /**
-                 * @property _this.deferStore
-                 * @type {Object}
-                 */
-                deferStore: {},
-
-                /**
-                 * @property relationships
-                 * @type {Object}
-                 */
-                relationships: {},
-
-                /**
                  * @property silent
                  * @type {Boolean}
                  */
@@ -246,18 +228,6 @@
                  * @type {String}
                  */
                 eventName: 'catwalk/{{type}}/{{collection}}',
-
-                /**
-                 * @property deferName
-                 * @type {String}
-                 */
-                deferName: 'catwalk/defer/{{collection}}/{{property}}/{{value}}',
-
-                /**
-                 * @property relationshipName
-                 * @type {String}
-                 */
-                relationshipName: '{{localCollection}}/{{localProperty}}/{{foreignCollection}}/{{foreignProperty}}',
 
                 /**
                  * @property attribute
@@ -347,9 +317,11 @@
                  * @return {void}
                  */
                 silently: function silently(processFunction) {
+
                     this.silent = true;
                     processFunction.apply(this);
                     this.silent = false;
+
                 },
 
                 /**
@@ -438,11 +410,8 @@
 
                     // Create a representation of the new model.
                     var newModel       = _.extend(_.clone(model), properties),
-                        newSimpleModel = this.simplifyModel(collectionName, newModel);
-
-                    console.log(JSON.stringify(newSimpleModel));
-
-                    var    promise        = this.createPromise(collectionName, 'update', [newSimpleModel]);
+                        newSimpleModel = this.simplifyModel(collectionName, newModel),
+                        promise        = this.createPromise(collectionName, 'update', [newSimpleModel]);
 
 //                    if (this.mode === 'instant') {
 //
@@ -473,20 +442,6 @@
                 resolveUpdateModel: function resolveUpdateModel(collectionName, newModel, oldModel, updatedProperties) {
 
                     return function resolvePromise() {
-
-                        var internalId = oldModel[this.primaryName];
-
-                        // Setup the relationships.
-                        this._propertyIterator(newModel, function iterator(property) {
-
-                            if (this.relationshipType(collectionName, property)) {
-
-                                // Update the new model with the previous relational data.
-                                newModel[property] = this.relationshipStore[collectionName][internalId][property];
-
-                            }
-
-                        });
 
                         this.silently(function silently() {
 
@@ -608,49 +563,9 @@
                  */
                 simplifyModel: function simplifyModel(collectionName, model) {
 
-                    var simpleModel = _.clone(model),
-                        internalId  = simpleModel[this.primaryName];
-
+                    var simpleModel = _.clone(model);
                     delete simpleModel[this.primaryName];
                     delete simpleModel.$$hashKey;
-
-                    // Reverse all of the relationships to be simple.
-                    this._propertyIterator(simpleModel, function iterator(property) {
-
-                        // We're only interested in the relationships.
-                        if (!this.relationshipType(collectionName, property)) {
-                            return;
-                        }
-
-                        var attribute         = simpleModel[property];
-                        simpleModel[property] = this.relationshipStore[collectionName][internalId][property];
-
-                        // Remove the relationship if we're removing a model that self-joins itself, and we're
-                        // modifying the attribute in which the relationship is formed on.
-
-                        switch (this.relationshipType(collectionName, property)) {
-
-//                                case (ngCatwalkRelationship.TYPES.ONE):  method = 'createHasOneRelationship'; break;
-                            case (ngCatwalkRelationship.TYPES.MANY):
-
-                                if (attribute[0]) {
-
-                                    _.forEach(attribute, function forEach(currentModel, index) {
-
-                                        if (currentModel[this.primaryName] === model[this.primaryName]) {
-                                            simpleModel[property].splice(index, 1);
-                                        }
-
-                                    }.bind(this));
-
-                                }
-
-                                break;
-
-                        }
-
-                    });
-
                     return simpleModel;
 
                 },
@@ -692,362 +607,11 @@
                 },
 
                 /**
-                 * @method createRelationship
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param property {String}
-                 * @return {void}
-                 */
-                createRelationship: function createRelationship(collectionName, model, property) {
-
-                    var localCollection   = this.collection(collectionName),
-                        blueprint         = localCollection.blueprint[property],
-                        options           = blueprint.getOptions(),
-                        foreignCollection = this.collection(options.collection),
-                        store             = this.relationshipStore,
-                        internalId        = model[this.primaryName];
-
-                    /**
-                     * @method storeRelationshipData
-                     * @return {void}
-                     */
-                    (function storeRelationshipData() {
-
-                        var record = {
-                            localCollection:   collectionName,
-                            localProperty:     property,
-                            foreignCollection: options.collection,
-                            foreignProperty:   options.foreignKey
-                        };
-
-                        // Store the relationship meta data for flushing purposes.
-                        var key = $interpolate(this.relationshipName)(record);
-                        this.relationships[key] = record;
-
-                    }.bind(this))();
-
-                    /**
-                     * @method recursivelyCreateRelationshipStore
-                     * @return {void}
-                     */
-                    (function recursivelyCreateRelationshipStore() {
-
-                        if (!$angular.isDefined(store[collectionName])) {
-                            store[collectionName] = {};
-                        }
-
-                        if (!$angular.isDefined(store[collectionName][internalId])) {
-                            store[collectionName][internalId] = {};
-                        }
-
-                    })();
-
-                    var method = 'throwRelationshipException';
-
-                    // Determine the type of the relationship, with the default being throwing an
-                    // exception to congratulate the developer on somehow managing to create an
-                    // invalid relationship.
-                    switch (this.relationshipType(collectionName, property)) {
-
-                        case (ngCatwalkRelationship.TYPES.ONE):  method = 'createHasOneRelationship'; break;
-                        case (ngCatwalkRelationship.TYPES.MANY): method = 'createHasManyRelationship'; break;
-
-                    }
-
-                    this[method](collectionName, model, property, foreignCollection, options.foreignKey);
-
-                },
-
-                /**
-                 * Responsible for pruning relationships where deleting and/or updating models would
-                 * otherwise leave invalid relationships.
-                 *
-                 * @method pruneRelationships
-                 * @param modifiedCollectionName {String}
-                 * @param model {Object}
-                 * @return {void}
-                 */
-                pruneRelationships: function pruneRelationships(modifiedCollectionName, model) {
-
-                    this._propertyIterator(this.relationships, function iterator(property) {
-
-                        var relationshipData = this.relationships[property];
-
-                        // Current relationship is of no concern if it doesn't pertain to the collection
-                        // that has been modified.
-                        if (relationshipData.foreignCollection !== modifiedCollectionName) {
-                            return;
-                        }
-
-                        // Locate the value from the modified model that needs to be removed from any
-                        // relevant relationships.
-                        var valueToDelete    = model[relationshipData.foreignProperty],
-                            models           = this.collection(relationshipData.localCollection).collection(),
-                            relationshipType = this.relationshipType(relationshipData.localCollection, relationshipData.localProperty);
-
-                        // Iterate over each model to remove the `valueToDelete` from the relationship.
-                        for (var index = 0; index < models.length; index++) {
-
-                            switch (relationshipType) {
-
-                                case (ngCatwalkRelationship.TYPES.ONE):
-                                    models[index][relationshipData.localProperty] = '';
-                                    break;
-
-                                case (ngCatwalkRelationship.TYPES.MANY):
-                                    models[index][relationshipData.localProperty].remove(valueToDelete);
-                                    break;
-
-                            }
-
-                        }
-
-                    });
-
-                },
-
-                /**
                  * @method throwRelationshipException
                  * @return {void}
                  */
                 throwRelationshipException: function throwRelationshipException() {
                     throwException("Congratulations! You managed to create an invalid relationship");
-                },
-
-                /**
-                 * @method createHasOneRelationship
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param property {String}
-                 * @param foreignCollection {Array}
-                 * @param foreignKey {String}
-                 * @return {Boolean}
-                 */
-                createHasOneRelationship: function createHasOneRelationship(collectionName, model, property, foreignCollection, foreignKey) {
-
-                    var internalId    = model[this.primaryName],
-                        store         = this.relationshipStore,
-                        createPromise = this.createPromise.bind(this);
-
-                    // Attach the property to the model relationship store.
-                    store[collectionName][internalId][property] = model[property] || '';
-
-                    $object.defineProperty(model, property, {
-
-                        /**
-                         * @method get
-                         * @return {Object}
-                         */
-                        get: function get() {
-
-                            var entry = store[collectionName][internalId][property];
-
-                            // Filter the foreign collection by the value we've defined on the local model.
-                            foreignCollection.filterBy(foreignKey, entry);
-                            var foreignModel = foreignCollection.collection()[0];
-
-                            if (entry.length && foreignCollection.length === 0) {
-
-                                var name = $interpolate(this.deferName)({
-                                    collection: foreignCollection.name,
-                                    property:   foreignKey,
-                                    value:      entry
-                                });
-
-                                if (!this.deferStore[name]) {
-
-                                    this.deferStore[name] = true;
-
-                                    // Relationship exists, but we don't have the corresponding model yet, and
-                                    // therefore we'll need to request it.
-                                    var promise = createPromise(foreignCollection.name, 'read', [foreignKey, entry]);
-
-                                    if (!this.silent) {
-
-                                        promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
-//                                        promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
-
-                                    }
-
-                                }
-
-                            }
-
-                            foreignCollection.unfilterBy(foreignKey);
-
-                            return foreignModel || {};
-
-                        }.bind(this),
-
-                        /**
-                         * @method set
-                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
-                         * @return {void}
-                         */
-                        set: function set(value) {
-                            store[collectionName][internalId][property] = value;
-                        }
-
-                    });
-
-                },
-
-                /**
-                 * @method createHasManyRelationship
-                 * @param collectionName {String}
-                 * @param model {Object}
-                 * @param property {String}
-                 * @param foreignCollection {Array}
-                 * @param foreignKey {String}
-                 * @return {Boolean}
-                 */
-                createHasManyRelationship: function createHasManyRelationship(collectionName, model, property, foreignCollection, foreignKey) {
-
-                    var internalId    = model[this.primaryName],
-                        store         = this.relationshipStore,
-                        createPromise = this.createPromise.bind(this);
-
-                    // Attach the property to the model relationship store.
-                    store[collectionName][internalId][property] = model[property] || [];
-                    var entry = store[collectionName][internalId][property];
-
-                    /**
-                     * @method inArray
-                     * @param expected {String|Number}
-                     * @param actual {String|Number}
-                     * @return {Boolean}
-                     */
-                    var inArray = function inArray(expected, actual) {
-                        return expected.indexOf(actual) !== -1;
-                    };
-
-                    $object.defineProperty(model, property, {
-
-                        /**
-                         * @method get
-                         * @return {Array}
-                         */
-                        get: function get() {
-
-                            // Fetch all of the models that pertain to our relationship array.
-                            foreignCollection.filterBy(foreignKey, entry, inArray);
-                            var foreignModels = foreignCollection.collection();
-
-                            if (entry.length && foreignModels.length !== entry.length) {
-
-                                // By default we'll assume nothing has been loaded.
-                                var difference = entry,
-                                    values     = ['ok'];
-
-                                if (foreignModels && foreignModels.length) {
-
-                                    // Determine which models need to be loaded.
-                                    values     = _.pluck(foreignModels, foreignKey);
-                                    difference = _.difference(entry, values);
-
-                                }
-
-                                if (values.length !== 0) {
-
-                                    // Iterate over each required model to attempt to load them via
-                                    // our promise.
-                                    for (var index = 0; index < difference.length; index++) {
-
-                                        var name = $interpolate(this.deferName)({
-                                            collection: foreignCollection.name,
-                                            property:   foreignKey,
-                                            value:      difference[index]
-                                        });
-
-                                        if (this.deferStore[name]) {
-
-                                            // We've already issue a promise for this model.
-                                            continue;
-
-                                        }
-
-                                        this.deferStore[name] = true;
-                                        var promise = createPromise(foreignCollection.name, 'read', [foreignKey, difference[index]]);
-
-                                        if (!this.silent) {
-
-                                            promise.then(this.resolveReadModel(foreignCollection.name).bind(this));
-//                                        promise.catch(this.rejectCreateModel(collectionName, model).bind(this));
-
-                                        }
-
-                                    }
-
-                                }
-
-                            }
-
-                            foreignCollection.unfilterBy(foreignKey);
-
-                            /**
-                             * @method add
-                             * @param value {String|Number}
-                             * @return {void}
-                             */
-                            foreignModels.add = function add(value) {
-
-                                if (!foreignModels.has(value)) {
-                                    entry.push(value);
-                                }
-
-                            };
-
-                            /**
-                             * @method remove
-                             * @param value {String|Number}
-                             * @return {void}
-                             */
-                            foreignModels.remove = function remove(value) {
-
-                                var index = entry.indexOf(value);
-
-                                if (index !== -1) {
-                                    entry.splice(index, 1);
-                                }
-
-                            };
-
-                            /**
-                             * @method clear
-                             * @return {void}
-                             */
-                            foreignModels.clear = function clear() {
-                                entry = [];
-                            };
-
-                            /**
-                             * @method has
-                             * @param value {String|Number}
-                             * @return {Boolean}
-                             */
-                            foreignModels.has = function has(value) {
-                                return entry.indexOf(value) !== -1;
-                            };
-
-                            return foreignModels || [];
-
-                        }.bind(this),
-
-                        /**
-                         * @method set
-                         * @param value {Object|Array|Number|Boolean|Date|String|RegExp}
-                         * @return {void}
-                         */
-                        set: function set(value) {
-
-                            if (entry.indexOf(value) === -1) {
-                                entry.push(value);
-                            }
-
-                        }
-
-                    });
-
                 },
 
                 /**
@@ -1062,8 +626,7 @@
                     var primaryKey          = this.primaryName,
                         blueprint           = this.collection(collectionName).blueprint,
                         iterator            = this._propertyIterator,
-                        relationshipType = this.relationshipType.bind(this),
-                        createRelationship  = this.createRelationship.bind(this);
+                        relationshipType = this.relationshipType.bind(this);
 
                     // Add the primary key to the model.
                     model[primaryKey] = ++this.collection(collectionName).index;
@@ -1114,7 +677,7 @@
                             }
 
                             // Now we know we're dealing with a relationship.
-                            createRelationship(collectionName, model, property);
+//                            createRelationship(collectionName, model, property);
 
                         });
 
@@ -1178,4 +741,4 @@
 
         }]);
 
-})(window.angular, window._, window.Object);
+})(window.angular, window._);

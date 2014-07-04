@@ -83,10 +83,10 @@
             }),
 
             /**
-             * @property colour
+             * @property colours
              * @type {Object}
              */
-            colour: catwalk.relationship.hasOne({
+            colours: catwalk.relationship.hasMany({
                 collection: 'colour',
                 foreignKey: 'colour'
             })
@@ -108,15 +108,11 @@
         });
 
         catwalk.createModel('colour', {
-            colour: 'Ginger'
+            colour: 'Bob'
         });
 
-//        catwalk.createModel('colour', {
-//            colour: 'Black'
-//        });
-
         catwalk.createModel('colour', {
-            colour: 'White'
+            colour: 'Kipper'
         });
 
         /**
@@ -128,7 +124,7 @@
 
             catwalk.createModel('cat', {
                 name: name,
-                colour: 'Black'
+                colours: ['Kipper', 'Bob']
             });
 
             $scope.catName = 'Mango';
