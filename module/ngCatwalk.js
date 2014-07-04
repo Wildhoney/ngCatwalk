@@ -530,9 +530,6 @@
                         // Delete the model from the collection and generate the promise.
                         this.collection(collectionName).deleteModel(model);
 
-                        // Update relationships to remove any ghost references.
-                        this.pruneRelationships(collectionName, model);
-
                     };
 
                 },

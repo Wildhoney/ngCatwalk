@@ -45,21 +45,32 @@ describe('ngCatwalk', function() {
 
     describe('Models', function() {
 
+        /**
+         * @property $model
+         * @type {Object}
+         */
+        var $model = {};
+
+        /**
+         * @method $createModel
+         * @return {void}
+         */
+        var $createModel = inject(function($rootScope, catwalk) {
+
+            spyOn($rootScope, '$on').and.callThrough();
+            spyOn($rootScope, '$broadcast').and.callThrough();
+
+            setupCollection();
+
+            var model = $model = catwalk.createModel('team', { name: 'Netherlands' });
+            expect($rootScope.$broadcast).toHaveBeenCalled();
+            expect(catwalk.collection('team').collection().length).toEqual(0);
+            expect(model.name).toEqual('Netherlands');
+            expect(model.colour).toEqual('None');
+
+        });
+
         describe('Create', function() {
-
-            var $createModel = inject(function($rootScope, catwalk) {
-
-                spyOn($rootScope, '$broadcast').and.callThrough();
-
-                setupCollection();
-
-                var model = catwalk.createModel('team', { name: 'Netherlands' });
-                expect($rootScope.$broadcast).toHaveBeenCalled();
-                expect(catwalk.collection('team').collection().length).toEqual(0);
-                expect(model.name).toEqual('Netherlands');
-                expect(model.colour).toEqual('None');
-
-            });
 
             it('Resolve: Should be able to create models;', function(done) {
 
@@ -137,6 +148,89 @@ describe('ngCatwalk', function() {
                         });
 
                         $createModel();
+
+                    });
+
+                });
+
+            });
+
+        });
+
+        describe('Delete', function() {
+
+            /**
+             * @method $createListener
+             * @param $rootScope {Object}
+             * @param catwalk {Object}
+             * @return {void}
+             */
+            var $createListener = function($rootScope, catwalk) {
+
+                $rootScope.$on('catwalk/create/team', function(event, deferred) {
+
+                    nextTick(function() {
+
+                        deferred.resolve();
+                        $rootScope.$digest();
+                        expect(catwalk.collection('team').collection().length).toEqual(1);
+                        catwalk.deleteModel('team', $model);
+
+                    });
+
+                });
+
+            };
+
+            it('Resolve: Should be able to delete models;', function(done) {
+
+                inject(function($rootScope, catwalk) {
+
+                    $rootScope.$apply(function() {
+
+                        $createListener($rootScope, catwalk);
+
+                        $rootScope.$on('catwalk/delete/team', function(event, deferred) {
+
+                            nextTick(function() {
+                                deferred.resolve();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(0);
+                                done();
+                            });
+
+                        });
+
+                        $createModel();
+                        expect(catwalk.collection('team').collection().length).toEqual(0);
+
+                    });
+
+                });
+
+            });
+
+            it('Reject: Should be able to delete models;', function(done) {
+
+                inject(function($rootScope, catwalk) {
+
+                    $rootScope.$apply(function() {
+
+                        $createListener($rootScope, catwalk);
+
+                        $rootScope.$on('catwalk/delete/team', function(event, deferred) {
+
+                            nextTick(function() {
+                                deferred.reject();
+                                $rootScope.$digest();
+                                expect(catwalk.collection('team').collection().length).toEqual(1);
+                                done();
+                            });
+
+                        });
+
+                        $createModel();
+                        expect(catwalk.collection('team').collection().length).toEqual(0);
 
                     });
 
