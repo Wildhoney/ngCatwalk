@@ -464,6 +464,8 @@
 
                         this.silently(function silently() {
 
+                            return [collectionName, oldModel, newModel];
+
                             // Silently create the new model, and delete the old model.
 //                            this.collection(collectionName).restoreModel(oldModel);
 //                            this.deleteModel(collectionName, newModel);

@@ -64,9 +64,6 @@
         function CatwalkService( $rootScope, $q, $interpolate, Crossfilter ) {
             function Catwalk() {
                 this.collections = {};
-                this.relationships = {};
-                this.relationshipStore = {};
-                this.deferStore = {};
             }
             Catwalk.prototype = {
                 mode: 'instant',
@@ -142,14 +139,20 @@
                     promise.then( this.resolveUpdateModel( collectionName, newModel, model, properties ).bind( this ) );
                     return model;
                 },
-                resolveUpdateModel: function resolveUpdateModel( collectionName, newModel, oldModel, updatedProperties ) {
+                resolveUpdateModel: function resolveUpdateModel( collectionName, newModel, oldModel ) {
                     return function resolvePromise() {
                         this.silently( function silently() {
                             this.createModel( collectionName, newModel );
                             this.deleteModel( collectionName, oldModel );
                         } );
-                        this.pruneRelationships( collectionName, updatedProperties );
                     }
+                },
+                rejectUpdateModel: function rejectUpdateModel( collectionName, oldModel, newModel ) {
+                    return function rejectPromise() {
+                        this.silently( function silently() {
+                            return [ collectionName, oldModel, newModel ];
+                        } );
+                    };
                 },
                 resolveReadModel: function resolveReadModel( collectionName ) {
                     return function resolvePromise( model ) {
@@ -157,14 +160,6 @@
                             this.createModel( collectionName, model );
                         } )
                     }
-                },
-                rejectUpdateModel: function rejectUpdateModel( collectionName, oldModel, newModel ) {
-                    return function rejectPromise() {
-                        this.silently( function silently() {
-                            this.collection( collectionName ).restoreModel( oldModel );
-                            this.deleteModel( collectionName, newModel );
-                        } );
-                    };
                 },
                 deleteModel: function deleteModel( collectionName, model ) {
                     var simpleModel = this.simplifyModel( collectionName, model ),
@@ -176,7 +171,6 @@
                 resolveDeleteModel: function resolveDeleteModel( collectionName, model ) {
                     return function resolvePromise() {
                         this.collection( collectionName ).deleteModel( model );
-                        this.pruneRelationships( collectionName, model );
                     };
                 },
                 rejectDeleteModel: function rejectDeleteModel( collectionName, model ) {
